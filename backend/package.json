@@ -1,0 +1,28 @@
+{
+  "name": "defai-sentinel-backend",
+  "version": "1.0.0",
+  "description": "Backend for DeFAI Sentinel - Security monitoring system for restaking protocols",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@redstone-finance/evm-connector": "^0.8.0",
+    "@tensorflow/tfjs-node": "^4.17.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.1",
+    "express": "^4.18.3",
+    "helmet": "^7.1.0",
+    "mongoose": "^8.2.0",
+    "redis": "^4.6.13",
+    "web3": "^4.5.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0"
+  }
+} 

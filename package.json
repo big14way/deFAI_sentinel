@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "@nomicfoundation/hardhat-verify": "^2.0.13"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "^5.8.0",
+    "@rainbow-me/rainbowkit": "^1.3.4",
+    "@tanstack/react-query": "^5.74.3",
+    "@walletconnect/ethereum-provider": "^2.19.4",
+    "viem": "^1.21.4",
+    "wagmi": "^1.4.13"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "defai-sentinel-contracts",
+  "version": "1.0.0",
+  "description": "DeFAI Sentinel Smart Contracts",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "verify": "hardhat verify",
+    "verify-interact": "hardhat run scripts/verify-interact.ts",
+    "cli": "hardhat run scripts/interact-cli.ts --network base",
+    "check": "node scripts/check-contract.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@openzeppelin/contracts": "^4.9.0",
+    "@typechain/ethers-v5": "^10.2.1",
+    "@typechain/hardhat": "^6.1.6",
+    "@types/node": "^18.15.13",
+    "dotenv": "^16.0.3",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.14.0",
+    "hardhat-deploy": "^0.11.30",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.2.0",
+    "typescript": "^5.0.4"
+  }
+}
