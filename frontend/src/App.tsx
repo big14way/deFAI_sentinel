@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Protocols from './pages/Protocols';
 import Anomalies from './pages/Anomalies';
 import AlertsPage from './pages/Alerts';
+import ManageProtocols from './pages/Protocols/Manage';
 
 const App: React.FC = () => {
   const walletConnectProjectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '3fa446903c59d3d217c44e18d8a5d978';
@@ -139,6 +140,7 @@ const App: React.FC = () => {
                 } />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/protocols" element={<Protocols />} />
+                <Route path="/protocols/manage" element={<ManageProtocols />} />
                 <Route path="/anomalies" element={<Anomalies />} />
                 <Route path="/alerts" element={<AlertsPage />} />
                 {/* Remove diagnostics route */}
