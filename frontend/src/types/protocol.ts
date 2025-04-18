@@ -18,6 +18,20 @@ export enum ProtocolCategory {
   OTHER = 'other'
 }
 
+export interface ChainInfo {
+  id: number;
+  name: string;
+  iconUrl?: string;
+  rpcUrl?: string;
+  explorerUrl?: string;
+  color?: string;
+  nativeCurrency?: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+}
+
 export interface Protocol {
   id?: string; // Added for compatibility with existing components
   address: string;
@@ -33,9 +47,28 @@ export interface Protocol {
   logoUrl?: string;
   status?: string;
   chain?: string;
+  chainId?: number; // Added for cross-chain support
   category?: string;
   lastUpdated?: number; // Alias for lastUpdateTime
   lastAnomaly?: number; // Alias for lastAnomalyTime
+  
+  // Cross-chain specific fields
+  deployments?: { [chainId: number]: string }; // Map of chainId to contract address
+  bridgeAddresses?: string[]; // List of associated bridge contract addresses
+  crossChainRiskScore?: number; // Risk score calculated considering cross-chain factors
+}
+
+// Added for cross-chain support
+export interface CrossChainLink {
+  sourceChainId: number;
+  targetChainId: number;
+  sourceProtocolAddress: string;
+  targetProtocolAddress: string;
+  bridgeAddress?: string;
+  linkType: 'bridge' | 'wrapper' | 'governance' | 'other';
+  riskScore: number;
+  lastActivity?: number;
+  volumeLast24h?: number;
 }
 
 export interface ProtocolSocialLinks {
@@ -90,7 +123,8 @@ export enum RiskFactorCategory {
   COLLATERAL = 'collateral',
   MARKET = 'market',
   REGULATORY = 'regulatory',
-  OPERATIONAL = 'operational'
+  OPERATIONAL = 'operational',
+  CROSS_CHAIN = 'cross_chain' // Added for cross-chain risks
 }
 
 export enum RiskSeverity {

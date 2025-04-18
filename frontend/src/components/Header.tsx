@@ -44,6 +44,12 @@ export const Header: React.FC = () => {
               >
                 Alerts
               </Link>
+              <Link 
+                to="/cross-chain" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/cross-chain')}`}
+              >
+                Cross-Chain
+              </Link>
             </nav>
           </div>
           <div className="flex items-center">

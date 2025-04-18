@@ -248,6 +248,65 @@ const mockAnomalies = [
   }
 ];
 
+// Mock cross-chain links for development/demo purposes
+const mockCrossChainLinks = [
+  {
+    sourceChainId: 1, // Ethereum
+    targetChainId: 8453, // Base
+    sourceProtocolAddress: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9', // Aave on Ethereum
+    targetProtocolAddress: '0x7dd703de0f5b39c5c5d05f503f587f4648414924', // Aave on Base (mock)
+    bridgeAddress: '0x4200000000000000000000000000000000000010', // Base bridge
+    linkType: 'bridge',
+    riskScore: 35,
+    lastActivity: Date.now() - 1000 * 60 * 30, // 30 minutes ago
+    volumeLast24h: 12500000 // $12.5M
+  },
+  {
+    sourceChainId: 1, // Ethereum
+    targetChainId: 42161, // Arbitrum
+    sourceProtocolAddress: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', // Uniswap on Ethereum
+    targetProtocolAddress: '0xfA7F8980b0f1E64A2062791cc3b0871572f1F7f0', // Uniswap on Arbitrum
+    bridgeAddress: '0x8315177aB297bA92A06054cE80a67Ed4DBd7ed3a', // Arbitrum bridge
+    linkType: 'bridge',
+    riskScore: 28,
+    lastActivity: Date.now() - 1000 * 60 * 120, // 2 hours ago
+    volumeLast24h: 18700000 // $18.7M
+  },
+  {
+    sourceChainId: 1, // Ethereum
+    targetChainId: 137, // Polygon
+    sourceProtocolAddress: '0xc00e94cb662c3520282e6f5717214004a7f26888', // Compound on Ethereum
+    targetProtocolAddress: '0x8dF3aad3a84da6b69A4DA8aeC3eA40d9091B2Ac4', // Compound on Polygon
+    bridgeAddress: '0xA0c68C638235ee32657e8f720a23ceC1bFc77C77', // Polygon bridge
+    linkType: 'bridge',
+    riskScore: 42,
+    lastActivity: Date.now() - 1000 * 60 * 45, // 45 minutes ago
+    volumeLast24h: 9800000 // $9.8M
+  },
+  {
+    sourceChainId: 1, // Ethereum
+    targetChainId: 10, // Optimism
+    sourceProtocolAddress: '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2', // MakerDAO on Ethereum
+    targetProtocolAddress: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', // MakerDAO on Optimism
+    bridgeAddress: '0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1', // Optimism bridge
+    linkType: 'bridge',
+    riskScore: 25,
+    lastActivity: Date.now() - 1000 * 60 * 80, // 80 minutes ago
+    volumeLast24h: 15300000 // $15.3M
+  },
+  {
+    sourceChainId: 1, // Ethereum
+    targetChainId: 43114, // Avalanche
+    sourceProtocolAddress: '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI on Ethereum
+    targetProtocolAddress: '0xd586E7F844cEa2F87f50152665BCbc2C279D8d70', // DAI on Avalanche
+    bridgeAddress: '0xE78388b4CE79068e89Bf8aA7f218eF6b9AB0e9d0', // Avalanche bridge
+    linkType: 'bridge',
+    riskScore: 32,
+    lastActivity: Date.now() - 1000 * 60 * 10, // 10 minutes ago
+    volumeLast24h: 7400000 // $7.4M
+  }
+];
+
 // Fetch protocols from API or use mock data as fallback
 export const getAllProtocols = async (): Promise<Protocol[]> => {
   console.log('Getting all protocols');
@@ -382,6 +441,178 @@ export const getProtocolByAddress = async (address: string): Promise<any> => {
   // Fallback to mock data
   const protocol = mockProtocols.find(p => p.address.toLowerCase() === address.toLowerCase());
   return protocol || null;
+};
+
+// Get protocol with cross-chain deployments
+export const getProtocolWithDeployments = async (address: string): Promise<any> => {
+  try {
+    const protocol = await getProtocolByAddress(address);
+    
+    if (!protocol) {
+      return null;
+    }
+    
+    // Add cross-chain deployments
+    protocol.deployments = {};
+    protocol.chainId = protocol.chainId || 8453; // Default to Base
+    
+    // Find cross-chain links for this protocol
+    const relevantLinks = mockCrossChainLinks.filter(
+      link => link.sourceProtocolAddress.toLowerCase() === address.toLowerCase() || 
+             link.targetProtocolAddress.toLowerCase() === address.toLowerCase()
+    );
+    
+    // Generate deployments from links
+    relevantLinks.forEach(link => {
+      if (link.sourceProtocolAddress.toLowerCase() === address.toLowerCase()) {
+        protocol.deployments[link.targetChainId] = link.targetProtocolAddress;
+      } else {
+        protocol.deployments[link.sourceChainId] = link.sourceProtocolAddress;
+      }
+    });
+    
+    // Calculate cross-chain risk score
+    if (relevantLinks.length > 0) {
+      const avgBridgeRisk = relevantLinks.reduce((sum, link) => sum + link.riskScore, 0) / relevantLinks.length;
+      // Weighted average: 70% protocol risk, 30% bridge risk
+      protocol.crossChainRiskScore = Math.round(0.7 * protocol.riskScore + 0.3 * avgBridgeRisk);
+    } else {
+      protocol.crossChainRiskScore = protocol.riskScore;
+    }
+    
+    return protocol;
+  } catch (error) {
+    console.error(`Error fetching protocol with deployments:`, error);
+    return null;
+  }
+};
+
+// Get cross-chain links for a protocol
+export const getProtocolCrossChainLinks = async (address: string): Promise<any[]> => {
+  try {
+    // In a real implementation, this would fetch data from the API or blockchain
+    return mockCrossChainLinks.filter(
+      link => link.sourceProtocolAddress.toLowerCase() === address.toLowerCase() || 
+             link.targetProtocolAddress.toLowerCase() === address.toLowerCase()
+    );
+  } catch (error) {
+    console.error(`Error fetching cross-chain links:`, error);
+    return [];
+  }
+};
+
+// Get all unique chains with protocol deployments
+export const getAllChains = async (): Promise<number[]> => {
+  try {
+    const protocols = await getAllProtocols();
+    
+    // Collect unique chain IDs
+    const chainSet = new Set<number>();
+    chainSet.add(8453); // Base (default)
+    
+    // Add chains from mock links
+    mockCrossChainLinks.forEach(link => {
+      chainSet.add(link.sourceChainId);
+      chainSet.add(link.targetChainId);
+    });
+    
+    return Array.from(chainSet);
+  } catch (error) {
+    console.error('Error fetching chains:', error);
+    return [1, 8453]; // Default to Ethereum and Base
+  }
+};
+
+// Get protocols deployed on a specific chain
+export const getProtocolsByChain = async (chainId: number): Promise<any[]> => {
+  try {
+    const allProtocols = await getAllProtocols();
+    
+    if (chainId === 8453) {
+      // All protocols are deployed on Base by default in our mock data
+      return allProtocols;
+    }
+    
+    // For other chains, check mock cross-chain links
+    const protocolsOnChain: any[] = [];
+    const seenAddresses = new Set<string>();
+    
+    mockCrossChainLinks.forEach(link => {
+      if (link.sourceChainId === chainId) {
+        const sourceProtocol = mockProtocols.find(p => 
+          p.address.toLowerCase() === link.sourceProtocolAddress.toLowerCase()
+        );
+        
+        if (sourceProtocol && !seenAddresses.has(sourceProtocol.address.toLowerCase())) {
+          seenAddresses.add(sourceProtocol.address.toLowerCase());
+          protocolsOnChain.push({
+            ...sourceProtocol,
+            chainId
+          });
+        }
+      } else if (link.targetChainId === chainId) {
+        const sourceProtocol = mockProtocols.find(p => 
+          p.address.toLowerCase() === link.sourceProtocolAddress.toLowerCase()
+        );
+        
+        if (sourceProtocol && !seenAddresses.has(link.targetProtocolAddress.toLowerCase())) {
+          seenAddresses.add(link.targetProtocolAddress.toLowerCase());
+          protocolsOnChain.push({
+            ...sourceProtocol,
+            address: link.targetProtocolAddress,
+            chainId
+          });
+        }
+      }
+    });
+    
+    return protocolsOnChain;
+  } catch (error) {
+    console.error(`Error fetching protocols for chain ${chainId}:`, error);
+    return [];
+  }
+};
+
+// Track asset flows between chains
+export const getAssetFlowsBetweenChains = async (sourceChainId: number, targetChainId: number): Promise<any> => {
+  try {
+    // This would be a real API call in production
+    const relevantLinks = mockCrossChainLinks.filter(
+      link => (link.sourceChainId === sourceChainId && link.targetChainId === targetChainId) ||
+             (link.sourceChainId === targetChainId && link.targetChainId === sourceChainId)
+    );
+    
+    const totalVolume = relevantLinks.reduce((sum, link) => sum + link.volumeLast24h, 0);
+    const flowCount = relevantLinks.length;
+    const avgRiskScore = flowCount > 0 
+      ? relevantLinks.reduce((sum, link) => sum + link.riskScore, 0) / flowCount 
+      : 0;
+    
+    // Generate mock historical data
+    const historicalData = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+      
+      return {
+        date: day.toISOString().split('T')[0],
+        volume: totalVolume * (0.8 + Math.random() * 0.4), // Random variation
+        flowCount: flowCount + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 2)
+      };
+    }).reverse();
+    
+    return {
+      sourceChainId,
+      targetChainId,
+      totalVolume,
+      flowCount,
+      avgRiskScore,
+      links: relevantLinks,
+      historicalData
+    };
+  } catch (error) {
+    console.error(`Error fetching asset flows between chains:`, error);
+    return null;
+  }
 };
 
 // Update a protocol's monitoring status
