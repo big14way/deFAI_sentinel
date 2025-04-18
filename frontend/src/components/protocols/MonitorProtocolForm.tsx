@@ -17,6 +17,7 @@ const MonitorProtocolForm: React.FC<MonitorProtocolFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [protocolInfo, setProtocolInfo] = useState<any | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const handleCheckProtocol = async () => {
     if (!address) {
@@ -63,10 +64,78 @@ const MonitorProtocolForm: React.FC<MonitorProtocolFormProps> = ({
       return;
     }
 
+    if (!protocolInfo) {
+      setError('Please check the protocol first');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     setSuccess(null);
 
+    try {
+      const result = await updateProtocolMonitoring(address, isActive);
+      
+      if (result) {
+        setSuccess(`Protocol monitoring status updated to: ${isActive ? 'Active' : 'Inactive'}`);
+        
+        // Update protocol info
+        try {
+          const updatedProtocol = await getProtocolByAddress(address);
+          setProtocolInfo(updatedProtocol);
+          
+          if (onSuccess) {
+            onSuccess();
+          }
+        } catch (refreshError) {
+          console.warn('Failed to refresh protocol data:', refreshError);
+          // Don't show an error to the user since the update was successful
+        }
+      } else {
+        setError('Failed to update monitoring status. Please try again.');
+        
+        // Increment retry count
+        setRetryCount(prev => prev + 1);
+      }
+    } catch (err) {
+      let errorMessage = 'Unknown error occurred';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        
+        // Handle specific errors
+        if (errorMessage.includes('user rejected')) {
+          errorMessage = 'Transaction was rejected. Please try again.';
+        } else if (errorMessage.includes('cannot estimate gas')) {
+          errorMessage = 'Transaction cannot be processed. The contract may not have an updateMonitoring function.';
+        } else if (errorMessage.includes('network congestion')) {
+          errorMessage = 'Network is congested. Please try again later.';
+        }
+      }
+      
+      setError(`Failed to update protocol: ${errorMessage}`);
+      
+      // If this is at least the second attempt, provide additional guidance
+      if (retryCount >= 1) {
+        setError(prevError => `${prevError || ''} This appears to be a recurring issue. You may need to check the contract implementation.`);
+      }
+      
+      if (onError && err instanceof Error) {
+        onError(err);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Function to handle retry with a delay
+  const handleRetryUpdate = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    
+    // Add a small delay before retrying to allow network conditions to potentially improve
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
       const result = await updateProtocolMonitoring(address, isActive);
       
@@ -81,11 +150,11 @@ const MonitorProtocolForm: React.FC<MonitorProtocolFormProps> = ({
           onSuccess();
         }
       } else {
-        setError('Failed to update monitoring status');
+        setError('Failed to update monitoring status after retry.');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(`Failed to update protocol: ${errorMessage}`);
+      setError(`Failed to update protocol after retry: ${errorMessage}`);
       
       if (onError && err instanceof Error) {
         onError(err);
@@ -177,6 +246,18 @@ const MonitorProtocolForm: React.FC<MonitorProtocolFormProps> = ({
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                   {error}
+                  {retryCount > 0 && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={handleRetryUpdate}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        disabled={isSubmitting}
+                      >
+                        Retry Update
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               

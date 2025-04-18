@@ -48,43 +48,50 @@ export const truncateString = (str: string, firstChars = 6, lastChars = 4): stri
 };
 
 /**
- * Format a Unix timestamp to a human-readable date string
+ * Format a timestamp to a readable date/time
+ * @param timestamp Unix timestamp in seconds
+ * @returns Formatted date string
  */
-export function formatTimestamp(timestamp: number | undefined): string {
-  if (!timestamp) return 'N/A';
+export const formatTimestamp = (timestamp?: number): string => {
+  if (!timestamp && timestamp !== 0) return 'N/A';
   
   const date = new Date(timestamp * 1000);
   return date.toLocaleString('en-US', {
-    year: 'numeric',
     month: 'short',
     day: 'numeric',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
-}
+};
 
 /**
- * Format a Unix timestamp to a relative time string (e.g., "2 hours ago")
+ * Format a timestamp to relative time (e.g., "2 hours ago")
+ * @param timestamp Unix timestamp in seconds
+ * @returns Relative time string
  */
-export function formatRelativeTime(timestamp: number | undefined): string {
-  if (!timestamp) return 'N/A';
+export const formatRelativeTime = (timestamp?: number): string => {
+  if (!timestamp && timestamp !== 0) return 'N/A';
   
   const now = Math.floor(Date.now() / 1000);
   const diff = now - timestamp;
   
-  if (diff < 60) return `${diff} seconds ago`;
+  if (diff < 60) return 'Just now';
   if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
   if (diff < 2592000) return `${Math.floor(diff / 86400)} days ago`;
-  
-  return formatTimestamp(timestamp);
-}
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)} months ago`;
+  return `${Math.floor(diff / 31536000)} years ago`;
+};
 
 /**
- * Format a number as currency
+ * Format a number as currency (USD)
+ * @param value Number to format
+ * @returns Formatted currency string
  */
-export function formatCurrency(value: number | undefined): string {
-  if (value === undefined) return 'N/A';
+export const formatCurrency = (value?: number): string => {
+  if (value === undefined || value === null) return 'N/A';
+  if (value === 0) return '$0';
   
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -92,13 +99,36 @@ export function formatCurrency(value: number | undefined): string {
     notation: 'compact',
     maximumFractionDigits: 2
   }).format(value);
-}
+};
 
 /**
- * Format an address to a shortened form
+ * Format a risk score to a percentage with appropriate color class
+ * @param score Risk score (0-100)
+ * @returns Object with formatted value and color class
  */
-export function formatAddress(address: string): string {
-  if (!address) return '';
+export const formatRiskScore = (score?: number): { value: string, colorClass: string } => {
+  if (score === undefined || score === null) {
+    return { value: 'N/A', colorClass: 'text-gray-500' };
+  }
   
+  const percentage = Math.min(100, Math.max(0, score)).toFixed(0);
+  
+  let colorClass = 'text-green-500';
+  if (score >= 70) {
+    colorClass = 'text-red-500';
+  } else if (score >= 40) {
+    colorClass = 'text-yellow-500';
+  }
+  
+  return { value: `${percentage}%`, colorClass };
+};
+
+/**
+ * Truncate an Ethereum address
+ * @param address Ethereum address
+ * @returns Truncated address
+ */
+export const truncateAddress = (address?: string): string => {
+  if (!address) return '';
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-} 
+}; 

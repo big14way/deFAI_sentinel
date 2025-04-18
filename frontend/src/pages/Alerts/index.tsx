@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { Alert, AlertSeverity, AlertStatus, AlertCategory } from '../../types';
 import AlertFeed from '../../components/alerts/AlertFeed';
@@ -95,13 +95,14 @@ const AlertsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [filters, setFilters] = useState<AlertFilters>({
     severity: 'all',
     status: 'all',
     timeFrame: 'all'
   });
 
-  // Load alerts when wallet is connected
+  // Load alerts when component mounts
   useEffect(() => {
     async function loadAlerts() {
       if (!isConnected) return;
@@ -109,6 +110,7 @@ const AlertsPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        setConnectionError(null);
         
         // Use the real API if available, otherwise fall back to mock data
         try {
@@ -125,10 +127,20 @@ const AlertsPage: React.FC = () => {
           setAlerts(mockAlerts);
         }
         
-        setLoading(false);
-      } catch (err) {
+        // Sort alerts by timestamp (newest first)
+        const sortedAlerts = [...alerts].sort((a, b) => b.timestamp - a.timestamp);
+        
+        setAlerts(sortedAlerts);
+      } catch (err: any) {
         console.error('Error loading alerts:', err);
-        setError('Failed to load alerts. Please try again later.');
+        
+        // Check for wallet connection errors
+        if (err.message && err.message.includes('WebSocket connection failed')) {
+          setConnectionError('Wallet connection issue detected. Please reconnect your wallet.');
+        } else {
+          setError('Failed to load alerts. Please try again later.');
+        }
+      } finally {
         setLoading(false);
       }
     }
@@ -211,6 +223,11 @@ const AlertsPage: React.FC = () => {
     }));
   };
 
+  // Handle reconnecting wallet
+  const handleReconnect = () => {
+    window.location.reload();
+  };
+
   if (!isConnected) {
     return (
       <div className="text-center p-8 bg-white rounded-xl shadow-lg">
@@ -223,6 +240,28 @@ const AlertsPage: React.FC = () => {
         <p className="text-gray-600 mb-4 max-w-md mx-auto">
           Please connect your wallet to view alerts and monitor protocol security in real-time.
         </p>
+      </div>
+    );
+  }
+
+  if (connectionError) {
+    return (
+      <div className="text-center p-8 bg-white rounded-xl shadow-lg">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold mb-4">Wallet Connection Issue</h2>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          {connectionError}
+        </p>
+        <button
+          onClick={handleReconnect}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Reconnect
+        </button>
       </div>
     );
   }

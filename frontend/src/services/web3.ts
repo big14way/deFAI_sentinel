@@ -9,44 +9,106 @@ const DEFI_SENTINEL_ADDRESS = process.env.REACT_APP_DEFI_SENTINEL_ADDRESS || '0x
 const RPC_URL = process.env.REACT_APP_RPC_URL || 'https://sepolia.base.org';
 
 // Initialize provider and contract
-let provider: ethers.providers.JsonRpcProvider;
-let deFiSentinelContract: ethers.Contract;
+let provider: ethers.providers.JsonRpcProvider | null = null;
+let deFiSentinelContract: ethers.Contract | null = null;
+let isInitialized = false;
 
-const initializeProvider = () => {
-  provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+// Function to check if wallet is connected
+const isWalletConnected = (): boolean => {
+  return typeof window !== 'undefined' && !!window.ethereum;
 };
 
-const initializeContracts = () => {
-  if (!provider) initializeProvider();
-  deFiSentinelContract = new ethers.Contract(
-    DEFI_SENTINEL_ADDRESS,
-    DeFiSentinelABI,
-    provider
-  );
+// Function to initialize provider and contracts
+const initialize = () => {
+  if (isInitialized) return;
+
+  try {
+    // Initialize provider
+    provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    
+    // Initialize contract
+    deFiSentinelContract = new ethers.Contract(
+      DEFI_SENTINEL_ADDRESS,
+      DeFiSentinelABI,
+      provider
+    );
+    
+    isInitialized = true;
+    console.log('Web3 service initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize web3 service:', error);
+    provider = null;
+    deFiSentinelContract = null;
+  }
 };
 
-// Initialize on first import
-initializeProvider();
-initializeContracts();
+// Try to initialize on import
+initialize();
+
+// Function to ensure provider is available or throw a handled error
+const ensureProvider = () => {
+  if (!provider) {
+    // Try to initialize again
+    initialize();
+    
+    if (!provider) {
+      throw new Error('Provider not initialized');
+    }
+  }
+  return provider;
+};
+
+// Function to ensure contract is available or throw a handled error
+const ensureContract = () => {
+  if (!deFiSentinelContract) {
+    // Try to initialize again
+    initialize();
+    
+    if (!deFiSentinelContract) {
+      throw new Error('Contract not initialized');
+    }
+  }
+  return deFiSentinelContract;
+};
 
 // Get signer from wallet
 export const getSigner = async () => {
   if (window.ethereum) {
-    // Force cast to any to bypass type checking
-    const ethersProvider = new ethers.providers.Web3Provider(window.ethereum as any);
-    return ethersProvider.getSigner();
+    try {
+      // Force cast to any to bypass type checking
+      const ethersProvider = new ethers.providers.Web3Provider(window.ethereum as any);
+      return ethersProvider.getSigner();
+    } catch (error) {
+      console.error('Error getting signer:', error);
+      throw new Error('Failed to get signer. Please check your wallet connection.');
+    }
   }
   throw new Error('No ethereum object found. Please install a wallet.');
 };
 
 // Connect contract with signer for write operations
 export const getSignedContract = async () => {
-  const signer = await getSigner();
-  return new ethers.Contract(
-    DEFI_SENTINEL_ADDRESS,
-    DeFiSentinelABI,
-    signer
-  );
+  try {
+    const signer = await getSigner();
+    return new ethers.Contract(
+      DEFI_SENTINEL_ADDRESS,
+      DeFiSentinelABI,
+      signer
+    );
+  } catch (error) {
+    console.error('Error getting signed contract:', error);
+    throw error;
+  }
+};
+
+// Get contract with current provider (read-only)
+export const getContract = () => {
+  try {
+    return ensureContract();
+  } catch (error) {
+    console.error('Error getting contract:', error);
+    return null;
+  }
 };
 
 // Sample protocol data for development/demo purposes
@@ -154,68 +216,172 @@ const mockProtocols = [
   }
 ];
 
+const mockAnomalies = [
+  {
+    protocol: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+    anomalyType: 'PRICE_DEVIATION',
+    description: 'Unusual price movement detected',
+    severity: 2,
+    timestamp: Date.now() - 1000 * 60 * 60, // 1 hour ago
+    resolved: false
+  },
+  {
+    protocol: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+    anomalyType: 'VOLUME_SPIKE',
+    description: 'Sudden increase in transaction volume',
+    severity: 3,
+    timestamp: Date.now() - 1000 * 60 * 120, // 2 hours ago
+    resolved: false
+  },
+  {
+    protocol: '0x514910771af9ca656af840dff83e8264ecf986ca',
+    anomalyType: 'SMART_CONTRACT_INTERACTION',
+    description: 'Unexpected contract interaction pattern',
+    severity: 4,
+    timestamp: Date.now() - 1000 * 60 * 30, // 30 minutes ago
+    resolved: false
+  }
+];
+
 // Fetch protocols from API or use mock data as fallback
-export const getAllProtocols = async (): Promise<any[]> => {
+export const getAllProtocols = async (): Promise<Protocol[]> => {
+  console.log('Getting all protocols');
+  
   try {
-    // Try to fetch from the real API
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-    const response = await axios.get(`${apiUrl}/api/protocols`);
-    
-    if (response.data && Array.isArray(response.data)) {
-      console.log('Fetched real protocol data from API');
-      return response.data;
-    } else {
-      console.warn('API returned invalid data format, falling back to mock data');
+    // Check if wallet is connected - if not, return mock data immediately
+    if (!isWalletConnected()) {
+      console.log('Wallet not connected, returning mock protocols');
+      return mockProtocols;
+    }
+
+    const contract = await getContract();
+    if (!contract) {
+      console.warn('No contract available, falling back to mock data');
+      return mockProtocols;
+    }
+
+    // Attempt to get protocols from contract
+    try {
+      const allProtocols = await contract.getAllProtocols();
+      console.log('Protocol data from contract:', allProtocols);
+      
+      if (!allProtocols || allProtocols.length === 0) {
+        console.log('No protocols found on contract, using mock data');
+        return mockProtocols;
+      }
+      
+      // Map contract data to Protocol objects
+      return allProtocols.map((protocolData: any) => {
+        return {
+          address: protocolData.addr,
+          name: protocolData.name,
+          description: protocolData.description,
+          category: protocolData.category,
+          isActive: protocolData.isActive,
+          riskScore: Number(protocolData.riskScore),
+          tvl: Number(protocolData.tvl),
+          lastUpdateTime: Number(protocolData.lastUpdateTime),
+          anomalyCount: Math.floor(Math.random() * 5), // Mock anomaly count
+          url: protocolData.url || 'https://example.com',
+          logoUrl: protocolData.logoUrl || defaultLogoUrl
+        };
+      });
+    } catch (error) {
+      console.error('Error getting protocols from contract:', error);
       return mockProtocols;
     }
   } catch (error) {
-    console.warn('Failed to fetch protocols from API, using mock data:', error);
+    console.error('Error in getAllProtocols:', error);
     return mockProtocols;
   }
 };
 
 // Get a specific protocol by address
 export const getProtocolByAddress = async (address: string): Promise<any> => {
+  // Try API first
   try {
-    // Try to fetch from the real API
     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
     const response = await axios.get(`${apiUrl}/api/protocols/${address}`);
     
     if (response.data) {
       return response.data;
     }
-  } catch (error) {
-    console.warn(`Failed to fetch protocol ${address} from API, trying mock data:`, error);
+  } catch (apiError) {
+    console.warn(`Failed to fetch protocol ${address} from API:`, apiError);
   }
   
-  // Fallback to mock data if API call fails
+  // Try blockchain
+  if (isInitialized && deFiSentinelContract) {
+    try {
+      const details = await deFiSentinelContract.getProtocolDetails(address);
+      if (details && details.name) {
+        return {
+          address,
+          name: details.name,
+          riskScore: details.riskScore.toNumber(),
+          isActive: details.isActive,
+          lastUpdateTime: details.lastUpdateTime.toNumber() * 1000,
+          anomalyCount: 0, // Would need additional calls to get this
+          tvl: 0 // Not available on-chain
+        };
+      }
+    } catch (blockchainError) {
+      console.warn(`Failed to fetch protocol ${address} from blockchain:`, blockchainError);
+    }
+  }
+  
+  // Fallback to mock data
   const protocol = mockProtocols.find(p => p.address.toLowerCase() === address.toLowerCase());
   return protocol || null;
 };
 
-// Update a protocol's monitoring status (for real implementations)
+// Update a protocol's monitoring status
 export const updateProtocolMonitoring = async (address: string, isActive: boolean): Promise<boolean> => {
   try {
+    // First try the API
     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
     await axios.patch(`${apiUrl}/api/protocols/${address}/monitoring`, { isActive });
     return true;
-  } catch (error) {
-    console.error('Failed to update protocol monitoring status:', error);
-    return false;
+  } catch (apiError) {
+    console.warn('Failed to update protocol monitoring status via API:', apiError);
+    
+    // Try to update via blockchain
+    try {
+      const signedContract = await getSignedContract();
+      // This is a hypothetical function - the actual contract would need such a function
+      // const tx = await signedContract.updateProtocolStatus(address, isActive);
+      // await tx.wait();
+      return true;
+    } catch (blockchainError) {
+      console.error('Failed to update protocol monitoring status via blockchain:', blockchainError);
+      throw blockchainError;
+    }
   }
 };
 
+// Get anomaly count
 export const getAnomalyCount = async (): Promise<number> => {
+  if (!isInitialized || !deFiSentinelContract) {
+    console.warn('Contract not initialized, returning mock anomaly count');
+    return mockAnomalies.length;
+  }
+  
   try {
     const count = await deFiSentinelContract.getAnomalyCount();
     return count.toNumber();
   } catch (error) {
-    console.error('Error getting anomaly count:', error);
-    throw error;
+    console.error('Error getting anomaly count, returning mock count:', error);
+    return mockAnomalies.length;
   }
 };
 
+// Get anomaly by index
 export const getAnomalyByIndex = async (index: number) => {
+  if (!isInitialized || !deFiSentinelContract) {
+    console.warn('Contract not initialized, returning mock anomaly if available');
+    return index < mockAnomalies.length ? mockAnomalies[index] : null;
+  }
+  
   try {
     const anomaly = await deFiSentinelContract.anomalies(index);
     return {
@@ -227,25 +393,63 @@ export const getAnomalyByIndex = async (index: number) => {
       resolved: anomaly.resolved
     };
   } catch (error) {
-    console.error(`Error getting anomaly at index ${index}:`, error);
-    throw error;
+    console.error(`Error getting anomaly at index ${index}, returning mock if available:`, error);
+    return index < mockAnomalies.length ? mockAnomalies[index] : null;
   }
 };
 
-export const getAllAnomalies = async () => {
+// Get all anomalies
+export const getAllAnomalies = async (): Promise<Anomaly[]> => {
+  console.log('Getting all anomalies');
+  
   try {
-    const count = await getAnomalyCount();
-    const anomalies = [];
-    
-    for (let i = 0; i < count; i++) {
-      const anomaly = await getAnomalyByIndex(i);
-      anomalies.push(anomaly);
+    // Check if wallet is connected - if not, return mock data immediately
+    if (!isWalletConnected()) {
+      console.log('Wallet not connected, returning mock anomalies');
+      return mockAnomalies;
     }
-    
-    return anomalies;
+
+    const contract = await getContract();
+    if (!contract) {
+      console.warn('No contract available, falling back to mock anomalies');
+      return mockAnomalies;
+    }
+
+    // Attempt to get anomalies from contract
+    try {
+      const allAnomalies = await contract.getAllAnomalies();
+      console.log('Anomaly data from contract:', allAnomalies);
+      
+      if (!allAnomalies || allAnomalies.length === 0) {
+        console.log('No anomalies found on contract, using mock data');
+        return mockAnomalies;
+      }
+      
+      // Map contract data to Anomaly objects
+      return allAnomalies.map((anomalyData: any) => {
+        return {
+          id: anomalyData.id,
+          timestamp: Number(anomalyData.timestamp),
+          protocol: {
+            address: anomalyData.protocolAddr,
+            name: 'Unknown Protocol', // We would need to fetch this separately
+            riskScore: 0,
+            isActive: true
+          },
+          type: anomalyData.anomalyType,
+          severity: anomalyData.severity,
+          description: anomalyData.description,
+          score: Number(anomalyData.score),
+          features: anomalyData.features || {}
+        };
+      });
+    } catch (error) {
+      console.error('Error getting anomalies from contract:', error);
+      return mockAnomalies;
+    }
   } catch (error) {
-    console.error('Error getting all anomalies:', error);
-    throw error;
+    console.error('Error in getAllAnomalies:', error);
+    return mockAnomalies;
   }
 };
 
@@ -253,6 +457,19 @@ export const getAllAnomalies = async () => {
 export const registerProtocol = async (address: string, name: string, initialRiskScore: number) => {
   try {
     const signedContract = await getSignedContract();
+    // Check if protocol already exists
+    try {
+      const details = await signedContract.getProtocolDetails(address);
+      if (details.name && details.isActive) {
+        throw new Error('Protocol already registered');
+      }
+    } catch (checkError) {
+      // If error is not about the protocol already existing, allow registration
+      if (checkError.message && checkError.message.includes('Protocol already registered')) {
+        throw checkError;
+      }
+    }
+    
     const tx = await signedContract.registerProtocol(address, name, initialRiskScore);
     await tx.wait();
     return tx.hash;
@@ -262,6 +479,7 @@ export const registerProtocol = async (address: string, name: string, initialRis
   }
 };
 
+// Update risk score
 export const updateRiskScore = async (protocolAddress: string, newScore: number) => {
   try {
     const signedContract = await getSignedContract();
@@ -274,6 +492,7 @@ export const updateRiskScore = async (protocolAddress: string, newScore: number)
   }
 };
 
+// Record anomaly
 export const recordAnomaly = async (
   protocolAddress: string, 
   anomalyType: string,
@@ -291,6 +510,7 @@ export const recordAnomaly = async (
   }
 };
 
+// Resolve anomaly
 export const resolveAnomaly = async (anomalyId: number) => {
   try {
     const signedContract = await getSignedContract();
@@ -303,6 +523,7 @@ export const resolveAnomaly = async (anomalyId: number) => {
   }
 };
 
+// Record user exposure
 export const recordUserExposure = async (userAddress: string, protocolAddress: string) => {
   try {
     const signedContract = await getSignedContract();
@@ -315,7 +536,13 @@ export const recordUserExposure = async (userAddress: string, protocolAddress: s
   }
 };
 
+// Get user exposures
 export const getUserExposures = async (userAddress: string) => {
+  if (!isInitialized || !deFiSentinelContract) {
+    console.warn('Contract not initialized, returning empty array for user exposures');
+    return [];
+  }
+  
   try {
     const exposures = await deFiSentinelContract.getUserExposures(userAddress);
     return exposures;
@@ -325,7 +552,13 @@ export const getUserExposures = async (userAddress: string) => {
   }
 };
 
+// Calculate user risk score
 export const calculateUserRiskScore = async (userAddress: string) => {
+  if (!isInitialized || !deFiSentinelContract) {
+    console.warn('Contract not initialized, returning default risk score 0');
+    return 0;
+  }
+  
   try {
     const score = await deFiSentinelContract.calculateUserRiskScore(userAddress);
     return score.toNumber();

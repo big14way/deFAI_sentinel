@@ -10,6 +10,7 @@ const Anomalies: React.FC = () => {
   const [anomalies, setAnomalies] = useState<AnomalyPrediction[]>([]);
   const [protocols, setProtocols] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [timeFilter, setTimeFilter] = useState<'all' | '24h' | '7d' | '30d'>('all');
 
@@ -21,6 +22,7 @@ const Anomalies: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        setConnectionError(null);
         
         // Load protocols to get names
         const protocolsData = await getAllProtocols();
@@ -34,9 +36,15 @@ const Anomalies: React.FC = () => {
         // Here we're using mock data for demo purposes
         const mockAnomalies = generateMockAnomalyData(20);
         setAnomalies(mockAnomalies);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading data:', err);
-        setError('Failed to load anomaly data. Please try again later.');
+        
+        // Check for wallet connection errors
+        if (err.message && err.message.includes('WebSocket connection failed')) {
+          setConnectionError('Wallet connection issue detected. Please reconnect your wallet.');
+        } else {
+          setError('Failed to load anomaly data. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
@@ -44,6 +52,11 @@ const Anomalies: React.FC = () => {
 
     loadData();
   }, [isConnected]);
+
+  // Handle wallet connection issues
+  const handleReconnect = () => {
+    window.location.reload();
+  };
 
   // Filter anomalies based on selected filters
   const filteredAnomalies = anomalies.filter(anomaly => {
@@ -94,18 +107,45 @@ const Anomalies: React.FC = () => {
 
   if (!isConnected) {
     return (
-      <div className="text-center p-8">
+      <div className="text-center p-8 bg-white rounded-xl shadow-lg">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
         <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600 mb-4 max-w-md mx-auto">
           Please connect your wallet to view anomaly data.
         </p>
       </div>
     );
   }
 
+  if (connectionError) {
+    return (
+      <div className="text-center p-8 bg-white rounded-xl shadow-lg">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold mb-4">Wallet Connection Issue</h2>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          {connectionError}
+        </p>
+        <button
+          onClick={handleReconnect}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Reconnect
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-8 text-center bg-white rounded-xl shadow-lg">
         <LoadingSpinner size="lg" />
         <p className="mt-4 text-gray-600">Loading anomalies...</p>
       </div>
@@ -114,11 +154,16 @@ const Anomalies: React.FC = () => {
 
   if (error) {
     return (
-      <div className="p-8 text-center">
-        <div className="text-red-500 mb-4">⚠️ {error}</div>
+      <div className="p-8 text-center bg-white rounded-xl shadow-lg">
+        <div className="text-red-500 mb-4 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {error}
+        </div>
         <button 
           onClick={() => window.location.reload()} 
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
         >
           Try Again
         </button>
