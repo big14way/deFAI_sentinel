@@ -131,4 +131,11 @@ export const formatRiskScore = (score?: number): { value: string, colorClass: st
 export const truncateAddress = (address?: string): string => {
   if (!address) return '';
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-}; 
+};
+
+/**
+ * Alias for truncateAddress for compatibility
+ * @param address Ethereum address
+ * @returns Truncated address
+ */
+export const formatAddress = truncateAddress; 

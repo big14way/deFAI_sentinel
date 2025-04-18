@@ -22,7 +22,7 @@ const RiskScoreCard: React.FC<RiskScoreCardProps> = ({ protocol }) => {
 
   // Handle navigation to protocol details
   const handleViewDetails = () => {
-    navigate(`/protocols/${protocol.id}`);
+    navigate(`/protocols/${protocol.address}`);
   };
 
   const riskColor = getRiskColor(protocol.riskScore);
@@ -49,10 +49,10 @@ const RiskScoreCard: React.FC<RiskScoreCardProps> = ({ protocol }) => {
             protocol.status === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
             'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
           }`}>
-            {protocol.status.charAt(0).toUpperCase() + protocol.status.slice(1)}
+            {protocol.status ? protocol.status.charAt(0).toUpperCase() + protocol.status.slice(1) : 'Active'}
           </span>
           <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-            {protocol.chain}
+            {protocol.chain || 'Base'}
           </span>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import { ethers } from 'ethers';
 import DeFiSentinelABI from '../abi/DeFiSentinel.json';
 import axios from 'axios';
+import { Protocol } from '../types/protocol';
+import { Anomaly } from '../types/anomaly';
 
 // Use the any type for window.ethereum as it's already typed by wagmi
 // and we're casting to any when using it
@@ -12,6 +14,9 @@ const RPC_URL = process.env.REACT_APP_RPC_URL || 'https://sepolia.base.org';
 let provider: ethers.providers.JsonRpcProvider | null = null;
 let deFiSentinelContract: ethers.Contract | null = null;
 let isInitialized = false;
+
+// Placeholder logo for protocols without a logo
+const defaultLogoUrl = 'https://via.placeholder.com/50?text=DeFi';
 
 // Function to check if wallet is connected
 const isWalletConnected = (): boolean => {
@@ -262,6 +267,7 @@ export const getAllProtocols = async (): Promise<Protocol[]> => {
 
     // Attempt to get protocols from contract
     try {
+      console.log('Fetching protocols from contract...');
       const allProtocols = await contract.getAllProtocols();
       console.log('Protocol data from contract:', allProtocols);
       
@@ -272,19 +278,38 @@ export const getAllProtocols = async (): Promise<Protocol[]> => {
       
       // Map contract data to Protocol objects
       return allProtocols.map((protocolData: any) => {
-        return {
-          address: protocolData.addr,
-          name: protocolData.name,
-          description: protocolData.description,
-          category: protocolData.category,
-          isActive: protocolData.isActive,
-          riskScore: Number(protocolData.riskScore),
-          tvl: Number(protocolData.tvl),
-          lastUpdateTime: Number(protocolData.lastUpdateTime),
-          anomalyCount: Math.floor(Math.random() * 5), // Mock anomaly count
-          url: protocolData.url || 'https://example.com',
-          logoUrl: protocolData.logoUrl || defaultLogoUrl
+        // Check if protocolData is a string (address only) or an object
+        const isAddressOnly = typeof protocolData === 'string';
+        const address = isAddressOnly ? protocolData : (protocolData.addr || protocolData);
+        
+        // Find a matching mock protocol to use for better display
+        const mockProtocol = mockProtocols.find(p => 
+          p.address.toLowerCase() === (address || '').toLowerCase()
+        );
+        
+        // If we have a matching mock protocol, use its name and other data
+        const protocol = {
+          address: address,
+          name: isAddressOnly ? 
+                (mockProtocol?.name || getProtocolNameFromAddress(address)) : 
+                (protocolData.name || mockProtocol?.name || getProtocolNameFromAddress(address)),
+          description: protocolData.description || mockProtocol?.description || '',
+          category: protocolData.category || mockProtocol?.category || 'DeFi',
+          isActive: typeof protocolData.isActive === 'boolean' ? protocolData.isActive : true,
+          riskScore: Number(protocolData.riskScore) || mockProtocol?.riskScore || Math.floor(Math.random() * 80) + 10,
+          tvl: Number(protocolData.tvl) || mockProtocol?.tvl || Math.floor(Math.random() * 5000000000),
+          lastUpdateTime: Number(protocolData.lastUpdateTime) || mockProtocol?.lastUpdateTime || Date.now() - 1000 * 60 * 30,
+          anomalyCount: mockProtocol?.anomalyCount || Math.floor(Math.random() * 5),
+          url: protocolData.url || mockProtocol?.url || 'https://example.com',
+          logoUrl: protocolData.logoUrl || mockProtocol?.logoUrl || defaultLogoUrl,
+          // Ensure other required fields are present
+          status: 'active',
+          chain: 'Base',
+          lastUpdated: Number(protocolData.lastUpdateTime) || mockProtocol?.lastUpdateTime || Date.now() - 1000 * 60 * 30,
         };
+        
+        console.log('Mapped protocol:', protocol);
+        return protocol;
       });
     } catch (error) {
       console.error('Error getting protocols from contract:', error);
@@ -294,6 +319,30 @@ export const getAllProtocols = async (): Promise<Protocol[]> => {
     console.error('Error in getAllProtocols:', error);
     return mockProtocols;
   }
+};
+
+// Helper function to get protocol name from address
+const getProtocolNameFromAddress = (address: string): string => {
+  // Common DeFi protocols addresses
+  const knownProtocols: Record<string, string> = {
+    '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9': 'Aave',
+    '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984': 'Uniswap',
+    '0xc00e94cb662c3520282e6f5717214004a7f26888': 'Compound',
+    '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2': 'MakerDAO',
+    '0x6b175474e89094c44da98b954eedeac495271d0f': 'DAI',
+    '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': 'Wrapped Bitcoin',
+    '0x514910771af9ca656af840dff83e8264ecf986ca': 'Chainlink',
+    '0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e': 'Yearn Finance',
+    '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0': 'Polygon',
+    '0x4fabb145d64652a948d72533023f6e7a623c7c53': 'Binance USD',
+    '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48': 'USDC',
+    '0xdac17f958d2ee523a2206206994597c13d831ec7': 'Tether',
+    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': 'Wrapped Ether',
+    // Add more as needed
+  };
+  
+  const normalizedAddress = address.toLowerCase();
+  return knownProtocols[normalizedAddress] || 'Protocol ' + address.substring(0, 6);
 };
 
 // Get a specific protocol by address
@@ -454,25 +503,26 @@ export const getAllAnomalies = async (): Promise<Anomaly[]> => {
 };
 
 // Write functions
-export const registerProtocol = async (address: string, name: string, initialRiskScore: number) => {
+export const registerProtocol = async (address: string, name: string, initialRiskScore: number = 50): Promise<boolean> => {
   try {
-    const signedContract = await getSignedContract();
-    // Check if protocol already exists
+    // Check if protocol is already registered
     try {
-      const details = await signedContract.getProtocolDetails(address);
-      if (details.name && details.isActive) {
+      const protocol = await getProtocolByAddress(address);
+      if (protocol) {
         throw new Error('Protocol already registered');
       }
     } catch (checkError) {
       // If error is not about the protocol already existing, allow registration
-      if (checkError.message && checkError.message.includes('Protocol already registered')) {
+      const error = checkError as Error;
+      if (error.message && error.message.includes('Protocol already registered')) {
         throw checkError;
       }
     }
-    
+
+    const signedContract = await getSignedContract();
     const tx = await signedContract.registerProtocol(address, name, initialRiskScore);
     await tx.wait();
-    return tx.hash;
+    return true;
   } catch (error) {
     console.error('Error registering protocol:', error);
     throw error;

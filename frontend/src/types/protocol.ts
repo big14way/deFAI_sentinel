@@ -19,6 +19,7 @@ export enum ProtocolCategory {
 }
 
 export interface Protocol {
+  id?: string; // Added for compatibility with existing components
   address: string;
   name: string;
   riskScore: number;
@@ -27,6 +28,14 @@ export interface Protocol {
   anomalyCount: number;
   lastAnomalyTime?: number; // timestamp in milliseconds
   tvl?: number; // Not from contract, would be fetched elsewhere
+  
+  // Added fields for compatibility with existing components
+  logoUrl?: string;
+  status?: string;
+  chain?: string;
+  category?: string;
+  lastUpdated?: number; // Alias for lastUpdateTime
+  lastAnomaly?: number; // Alias for lastAnomalyTime
 }
 
 export interface ProtocolSocialLinks {

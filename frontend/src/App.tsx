@@ -13,6 +13,7 @@ import Protocols from './pages/Protocols';
 import Anomalies from './pages/Anomalies';
 import AlertsPage from './pages/Alerts';
 import ManageProtocols from './pages/Protocols/Manage';
+import AddProtocol from './pages/AddProtocol';
 
 const App: React.FC = () => {
   const walletConnectProjectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '3fa446903c59d3d217c44e18d8a5d978';
@@ -30,14 +31,20 @@ const App: React.FC = () => {
       wallets: [
         injectedWallet({ chains }),
         metaMaskWallet({ projectId: walletConnectProjectId, chains }),
-        walletConnectWallet({ projectId: walletConnectProjectId, chains }),
+        walletConnectWallet({ 
+          projectId: walletConnectProjectId, 
+          chains,
+          options: {
+            relayUrl: 'wss://relay.walletconnect.com'
+          }
+        }),
       ],
     },
   ]);
 
   // Create Wagmi config
   const wagmiConfig = createConfig({
-    autoConnect: false,
+    autoConnect: true,
     connectors,
     publicClient,
   });
@@ -141,6 +148,8 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/protocols" element={<Protocols />} />
                 <Route path="/protocols/manage" element={<ManageProtocols />} />
+                <Route path="/protocols/add" element={<AddProtocol />} />
+                <Route path="/protocols/:id" element={<Protocols />} />
                 <Route path="/anomalies" element={<Anomalies />} />
                 <Route path="/alerts" element={<AlertsPage />} />
                 {/* Remove diagnostics route */}

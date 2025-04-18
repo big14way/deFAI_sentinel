@@ -71,7 +71,8 @@ export const useProtocols = (useWeb3 = true) => {
   const addProtocol = useCallback(async (address: string, name: string) => {
     try {
       if (useWeb3) {
-        await web3Service.registerProtocol(address, name);
+        // Default risk score set to 50 (medium risk)
+        await web3Service.registerProtocol(address, name, 50);
         // Refetch after registration
         fetchProtocols();
       } else {

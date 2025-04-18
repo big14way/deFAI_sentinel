@@ -17,7 +17,6 @@ const Dashboard: React.FC = () => {
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string>('Loading data...');
 
   // Load data on component mount
   useEffect(() => {
@@ -28,7 +27,6 @@ const Dashboard: React.FC = () => {
         if (!isMounted) return;
         
         console.log('Dashboard loading data, wallet connected:', isConnected);
-        setDebugInfo(prev => prev + '\nStarting data load process...');
         
         setLoading(true);
         setError(null);
@@ -40,13 +38,17 @@ const Dashboard: React.FC = () => {
           const protocolsData = await getAllProtocols();
           
           if (isMounted) {
-            console.log('Protocols loaded:', protocolsData.length);
-            setDebugInfo(prev => prev + `\nProtocols loaded: ${protocolsData.length}`);
-            setProtocols(protocolsData);
+            // Filter out any obviously fake protocols
+            const validProtocols = protocolsData.filter(
+              p => p.address.length === 42 && !p.address.includes('123456789012345')
+            );
+            
+            console.log('Protocols loaded:', validProtocols.length);
+            setProtocols(validProtocols);
             
             // Generate mock alerts as soon as we have protocols
-            if (protocolsData.length > 0) {
-              const mockAlerts: Alert[] = protocolsData
+            if (validProtocols.length > 0) {
+              const mockAlerts: Alert[] = validProtocols
                 .filter(p => p.riskScore > 50)
                 .slice(0, 3)
                 .map((p, index) => ({
@@ -64,7 +66,6 @@ const Dashboard: React.FC = () => {
           }
         } catch (protocolError: any) {
           console.error('Error loading protocols:', protocolError);
-          setDebugInfo(prev => prev + `\nError loading protocols: ${protocolError}`);
           
           // Check for wallet connection errors
           if (protocolError.message && protocolError.message.includes('WebSocket connection failed')) {
@@ -79,12 +80,10 @@ const Dashboard: React.FC = () => {
           
           if (isMounted) {
             console.log('Anomalies loaded:', anomaliesData.length);
-            setDebugInfo(prev => prev + `\nAnomalies loaded: ${anomaliesData.length}`);
             setRecentAnomalies(anomaliesData);
           }
         } catch (anomalyError) {
           console.warn('Error loading anomalies:', anomalyError);
-          setDebugInfo(prev => prev + `\nError loading anomalies: ${anomalyError}`);
           
           if (isMounted) {
             // Set an empty array for anomalies if load fails
@@ -93,7 +92,6 @@ const Dashboard: React.FC = () => {
         }
       } catch (err) {
         console.error('Overall error loading dashboard data:', err);
-        setDebugInfo(prev => prev + `\nOverall error: ${err}`);
         
         if (isMounted) {
           setError('Failed to load dashboard data. Please try again later.');
@@ -102,15 +100,20 @@ const Dashboard: React.FC = () => {
         if (isMounted) {
           setLoading(false);
           console.log('Dashboard data loading complete');
-          setDebugInfo(prev => prev + '\nData loading complete');
         }
       }
     }
 
     loadData();
     
+    // Set up a refresh interval for real-time updates
+    const intervalId = setInterval(() => {
+      loadData();
+    }, 60000); // Refresh every 60 seconds
+    
     // Cleanup function
     return () => {
+      clearInterval(intervalId);
       isMounted = false;
     };
   }, [isConnected]); // Make the effect run when wallet connection changes
@@ -149,6 +152,11 @@ const Dashboard: React.FC = () => {
   // Handle wallet connection issues
   const handleReconnect = () => {
     window.location.reload();
+  };
+
+  // Navigate to add protocol
+  const handleAddProtocol = () => {
+    navigate('/protocols/add');
   };
 
   // If not connected, show connection prompt
@@ -234,114 +242,111 @@ const Dashboard: React.FC = () => {
         recentAnomalies={dashboardStats.recentAnomalies}
       />
 
-      {/* Debug Information (only in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mb-6 p-4 bg-gray-100 rounded-lg text-xs font-mono overflow-auto max-h-40">
-          <h4 className="font-bold mb-2">Debug Info:</h4>
-          <pre>{debugInfo}</pre>
-        </div>
-      )}
-
-      {/* Protocol Management Button */}
-      <div className="mb-8">
+      {/* Protocol Management Buttons */}
+      <div className="flex items-center gap-4 mb-8">
         <Link 
           to="/protocols/manage"
           className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+            <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
           </svg>
-          Register or Monitor Protocols
+          Manage Protocols
         </Link>
-        <p className="mt-2 text-sm text-gray-600">
-          Register new DeFi protocols or update monitoring status for existing ones
-        </p>
+        
+        <button
+          onClick={handleAddProtocol}
+          className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
+          Add New Protocol
+        </button>
       </div>
 
-      {/* Main Dashboard Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Protocol Risk Overview */}
+      {/* Main Dashboard Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Protocol List */}
         <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Protocol Risk Overview</h2>
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Monitored Protocols</h2>
+              <span className="text-sm font-medium px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                Live Monitoring
+              </span>
+            </div>
             
             {protocols.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
-                No protocols found. Register protocols to view risk data.
+              <div className="text-center py-8">
+                <p className="text-gray-500">No protocols registered yet.</p>
+                <button
+                  onClick={handleAddProtocol}
+                  className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+                >
+                  Register your first protocol
+                </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Protocol</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Score</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Update</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Anomalies</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {protocols.slice(0, 5).map((protocol, index) => (
-                      <tr key={protocol.address} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          <Link to={`/protocols/${protocol.address}`} className="hover:text-blue-600">
-                            {protocol.name}
-                          </Link>
-                          <p className="text-xs text-gray-500">{`${protocol.address.substring(0, 6)}...${protocol.address.substring(protocol.address.length - 4)}`}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRiskClass(protocol.riskScore)}`}>
-                            {protocol.riskScore} - {getRiskLabel(protocol.riskScore)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${protocol.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {protocol.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
-                          {new Date(protocol.lastUpdateTime).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
-                          {protocol.anomalyCount > 0 ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                              {protocol.anomalyCount}
+              <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
+                {protocols.map((protocol) => (
+                  <div 
+                    key={protocol.address}
+                    onClick={() => navigate(`/protocols/${protocol.address}`)}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        {protocol.logoUrl ? (
+                          <img 
+                            src={protocol.logoUrl} 
+                            alt={`${protocol.name} logo`} 
+                            className="w-10 h-10 rounded-full mr-3" 
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                            <span className="text-blue-800 font-bold">
+                              {protocol.name.substring(0, 2).toUpperCase()}
                             </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              None
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                {protocols.length > 5 && (
-                  <div className="mt-4 text-center">
-                    <Link to="/protocols" className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                      View All Protocols
-                    </Link>
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-semibold">{protocol.name}</h3>
+                          <p className="text-sm text-gray-500">{protocol.address.substring(0, 6)}...{protocol.address.substring(38)}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskClass(protocol.riskScore)}`}>
+                          Risk: {protocol.riskScore}% ({getRiskLabel(protocol.riskScore)})
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500">Category</p>
+                        <p className="font-medium">{protocol.category || 'DeFi'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Status</p>
+                        <p className="font-medium capitalize">{protocol.status || (protocol.isActive ? 'Active' : 'Inactive')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Anomalies</p>
+                        <p className="font-medium">{protocol.anomalyCount || 0}</p>
+                      </div>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
         </div>
-        
-        {/* Recent Alerts */}
-        <div>
-          <div className="bg-white p-6 rounded-xl shadow-md h-full">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Alerts</h2>
-            {recentAlerts.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
-                No recent alerts. All protocols are operating normally.
-              </div>
-            ) : (
-              <AlertFeed alerts={recentAlerts} maxItems={5} showProtocolName={true} />
-            )}
+
+        {/* Alerts Section */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Recent Alerts</h2>
+            <AlertFeed alerts={recentAlerts} maxItems={5} />
           </div>
         </div>
       </div>

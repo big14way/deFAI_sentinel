@@ -10,8 +10,10 @@ interface ProtocolCardProps {
 const ProtocolCard: React.FC<ProtocolCardProps> = ({ protocol }) => {
   const navigate = useNavigate();
   
-  const getStatusClass = (status: string) => {
-    switch (status) {
+  const getStatusClass = (status: string | undefined) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
+    
+    switch (status.toUpperCase()) {
       case 'ACTIVE':
         return 'bg-green-100 text-green-800';
       case 'INACTIVE':
@@ -30,7 +32,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({ protocol }) => {
   return (
     <div 
       className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
-      onClick={() => navigate(`/protocol/${protocol.id}`)}
+      onClick={() => navigate(`/protocols/${protocol.address}`)}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
