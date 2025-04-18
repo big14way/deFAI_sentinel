@@ -28,8 +28,14 @@ const Protocols: React.FC = () => {
         setConnectionError(null);
         
         const data = await getAllProtocols();
-        setProtocols(data);
-        setFilteredProtocols(data);
+        
+        // Filter out fake protocols
+        const validProtocols = data.filter(
+          p => p.address.length === 42 && !p.address.includes('123456789012345')
+        );
+        
+        setProtocols(validProtocols);
+        setFilteredProtocols(validProtocols);
       } catch (err: any) {
         console.error('Error loading protocols:', err);
         
