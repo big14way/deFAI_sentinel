@@ -1,14 +1,22 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import RiskNotifications from './notifications/RiskNotifications'; 
+import { useAccount } from 'wagmi';
 
 export const Header: React.FC = () => {
   const location = useLocation();
+  const { address } = useAccount();
   
   const isActive = (path: string) => {
     return location.pathname === path ? 
       'text-blue-700 border-b-2 border-blue-600' : 
       'text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300';
+  };
+  
+  const handleViewProtocol = (protocolAddress: string) => {
+    // Navigate to protocol details
+    window.location.href = `/protocols/${protocolAddress}`;
   };
   
   return (
@@ -50,9 +58,21 @@ export const Header: React.FC = () => {
               >
                 Cross-Chain
               </Link>
+              <Link 
+                to="/portfolio" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/portfolio')}`}
+              >
+                Portfolio Risk
+              </Link>
             </nav>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            {address && (
+              <RiskNotifications 
+                userAddress={address}
+                onViewProtocol={handleViewProtocol} 
+              />
+            )}
             <ConnectButton />
           </div>
         </div>

@@ -307,6 +307,82 @@ const mockCrossChainLinks = [
   }
 ];
 
+// Mock user exposures for development purposes
+const mockUserExposures = {
+  // User 1 exposures
+  '0x742d35Cc6634C0532925a3b844Bc454e4438f44e': [
+    {
+      protocolAddress: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9', // Aave
+      amount: 15000,
+      assets: [
+        {
+          tokenAddress: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+          tokenSymbol: 'WETH',
+          tokenName: 'Wrapped Ether',
+          amount: '5.25',
+          value: 9250
+        },
+        {
+          tokenAddress: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
+          tokenSymbol: 'WBTC',
+          tokenName: 'Wrapped Bitcoin',
+          amount: '0.32',
+          value: 5750
+        }
+      ]
+    },
+    {
+      protocolAddress: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', // Uniswap
+      amount: 22500,
+      assets: [
+        {
+          tokenAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+          tokenSymbol: 'USDC',
+          tokenName: 'USD Coin',
+          amount: '12500',
+          value: 12500
+        },
+        {
+          tokenAddress: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+          tokenSymbol: 'WETH',
+          tokenName: 'Wrapped Ether',
+          amount: '5.7',
+          value: 10000
+        }
+      ]
+    },
+    {
+      protocolAddress: '0x514910771af9ca656af840dff83e8264ecf986ca', // Chainlink (High Risk)
+      amount: 8000,
+      assets: [
+        {
+          tokenAddress: '0x514910771af9ca656af840dff83e8264ecf986ca',
+          tokenSymbol: 'LINK',
+          tokenName: 'Chainlink',
+          amount: '950',
+          value: 8000
+        }
+      ]
+    }
+  ],
+  // User 2 exposures
+  '0x123456789abcdef0123456789abcdef012345678': [
+    {
+      protocolAddress: '0x6b175474e89094c44da98b954eedeac495271d0f', // DAI
+      amount: 50000,
+      assets: [
+        {
+          tokenAddress: '0x6b175474e89094c44da98b954eedeac495271d0f',
+          tokenSymbol: 'DAI',
+          tokenName: 'Dai Stablecoin',
+          amount: '50000',
+          value: 50000
+        }
+      ]
+    }
+  ]
+};
+
 // Fetch protocols from API or use mock data as fallback
 export const getAllProtocols = async (): Promise<Protocol[]> => {
   console.log('Getting all protocols');
@@ -818,14 +894,47 @@ export const recordUserExposure = async (userAddress: string, protocolAddress: s
 };
 
 // Get user exposures
-export const getUserExposures = async (userAddress: string) => {
-  if (!isInitialized || !deFiSentinelContract) {
-    console.warn('Contract not initialized, returning empty array for user exposures');
-    return [];
-  }
-  
+export const getUserExposures = async (userAddress?: string) => {
   try {
-    const exposures = await deFiSentinelContract.getUserExposures(userAddress);
+    if (!userAddress) {
+      throw new Error('User address is required');
+    }
+    
+    const contract = ensureContract();
+    
+    // If wallet not connected or using mock data for development
+    if (!isWalletConnected() || process.env.REACT_APP_USE_MOCK_DATA === 'true') {
+      // Return mock data if available for this address
+      if (mockUserExposures[userAddress]) {
+        console.log('Using mock exposure data for', userAddress);
+        return mockUserExposures[userAddress];
+      }
+      
+      // Return empty array if no mock data
+      console.log('No mock data available for', userAddress);
+      return [];
+    }
+    
+    // Get user exposures from the contract
+    const exposuresCount = await contract.getUserExposuresCount(userAddress);
+    const exposures = [];
+    
+    for (let i = 0; i < exposuresCount; i++) {
+      const exposure = await contract.getUserExposure(userAddress, i);
+      
+      // Get protocol details
+      const protocol = await getProtocolByAddress(exposure.protocol);
+      
+      // Format the exposure
+      exposures.push({
+        protocolAddress: exposure.protocol,
+        protocolName: protocol.name,
+        amount: parseFloat(ethers.utils.formatEther(exposure.amount)),
+        // For real implementation, we would get actual assets data from another API/contract
+        assets: []
+      });
+    }
+    
     return exposures;
   } catch (error) {
     console.error('Error fetching user exposures:', error);
@@ -835,18 +944,101 @@ export const getUserExposures = async (userAddress: string) => {
 
 // Calculate user risk score
 export const calculateUserRiskScore = async (userAddress: string) => {
-  if (!isInitialized || !deFiSentinelContract) {
-    console.warn('Contract not initialized, returning default risk score 0');
-    return 0;
-  }
-  
   try {
-    const score = await deFiSentinelContract.calculateUserRiskScore(userAddress);
-    return score.toNumber();
+    const contract = ensureContract();
+    
+    // If wallet not connected or using mock data for development
+    if (!isWalletConnected() || process.env.REACT_APP_USE_MOCK_DATA === 'true') {
+      // For mock data, calculate risk based on exposure to high-risk protocols
+      if (mockUserExposures[userAddress]) {
+        const exposures = mockUserExposures[userAddress];
+        let totalRiskWeightedValue = 0;
+        let totalValue = 0;
+        
+        for (const exposure of exposures) {
+          // Get protocol details to get risk score
+          const protocol = await getProtocolByAddress(exposure.protocolAddress);
+          const protocolRiskScore = protocol.riskScore;
+          
+          // Calculate risk-weighted value
+          totalRiskWeightedValue += exposure.amount * (protocolRiskScore / 100);
+          totalValue += exposure.amount;
+        }
+        
+        // Normalize risk score (0-100)
+        return totalValue > 0 ? (totalRiskWeightedValue / totalValue) * 100 : 0;
+      }
+      
+      // Default risk score if no exposures
+      return 0;
+    }
+    
+    // Get risk score from contract
+    const riskScore = await contract.calculateUserRiskScore(userAddress);
+    return parseFloat(ethers.utils.formatUnits(riskScore, 0));
+    
   } catch (error) {
     console.error('Error calculating user risk score:', error);
     return 0;
   }
+};
+
+// Function to check if user has notifications about protocol risk changes
+export const getUserNotifications = async (userAddress: string) => {
+  try {
+    // In a real implementation, this would query a notification service or contract
+    // For now, we'll return mock notifications based on exposures
+    
+    if (mockUserExposures[userAddress]) {
+      const exposures = mockUserExposures[userAddress];
+      const notifications = [];
+      
+      for (const exposure of exposures) {
+        const protocol = await getProtocolByAddress(exposure.protocolAddress);
+        
+        // Add notification for high risk protocols
+        if (protocol.riskScore > 65) {
+          notifications.push({
+            id: `risk-alert-${protocol.address}`,
+            type: 'risk-alert',
+            title: `High Risk Alert: ${protocol.name}`,
+            message: `${protocol.name} has a high risk score of ${protocol.riskScore}/100. Consider reducing your exposure.`,
+            timestamp: Date.now(),
+            read: false,
+            protocolAddress: protocol.address
+          });
+        }
+        
+        // Add notification for recent anomalies
+        if (protocol.anomalyCount > 0 && protocol.lastAnomalyTime && 
+            (Date.now() - protocol.lastAnomalyTime) < 1000 * 60 * 60 * 24) { // Within last 24h
+          notifications.push({
+            id: `anomaly-alert-${protocol.address}`,
+            type: 'anomaly-alert',
+            title: `Recent Anomaly: ${protocol.name}`,
+            message: `${protocol.name} had a recent anomaly detected. You have $${exposure.amount.toLocaleString()} invested.`,
+            timestamp: protocol.lastAnomalyTime,
+            read: false,
+            protocolAddress: protocol.address
+          });
+        }
+      }
+      
+      return notifications;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching user notifications:', error);
+    return [];
+  }
+};
+
+// Function to mark a notification as read
+export const markNotificationAsRead = async (userAddress: string, notificationId: string) => {
+  // In a real implementation, this would update a notifications database or contract
+  console.log(`Marking notification ${notificationId} as read for user ${userAddress}`);
+  return true;
 };
 
 export default {
@@ -862,5 +1054,7 @@ export default {
   resolveAnomaly,
   recordUserExposure,
   getUserExposures,
-  calculateUserRiskScore
+  calculateUserRiskScore,
+  getUserNotifications,
+  markNotificationAsRead
 }; 

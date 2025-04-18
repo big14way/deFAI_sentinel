@@ -1,0 +1,7 @@
+This is a placeholder file for ML models.
+
+When trained models are available, they should be placed in this directory with the following naming convention:
+- anomaly_detector.joblib - Anomaly detection model
+- risk_model.joblib - Risk scoring model
+
+The application will automatically detect and load these models if present. 

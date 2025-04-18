@@ -16,6 +16,21 @@ import ManageProtocols from './pages/Protocols/Manage';
 import AddProtocol from './pages/AddProtocol';
 import ProtocolDetails from './pages/Protocols/Details';
 import CrossChainMonitoring from './components/CrossChainMonitoring';
+import PortfolioRiskAssessment from './components/portfolio/PortfolioRiskAssessment';
+
+// Create a Portfolio page component that uses the PortfolioRiskAssessment component
+const PortfolioPage: React.FC = () => {
+  const handleConnectWallet = () => {
+    // Use RainbowKit's open method or similar approach
+    console.log("Connect wallet button clicked");
+  };
+  
+  return (
+    <div className="container mx-auto px-4">
+      <PortfolioRiskAssessment onConnectWallet={handleConnectWallet} />
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const walletConnectProjectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || '3fa446903c59d3d217c44e18d8a5d978';
@@ -77,7 +92,7 @@ const App: React.FC = () => {
                     <div className="px-8 py-12">
                       <h2 className="text-2xl font-bold text-gray-800 mb-8">Explore Our Platform</h2>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow border border-blue-50">
                           <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,6 +149,25 @@ const App: React.FC = () => {
                             </svg>
                           </Link>
                         </div>
+                        
+                        <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow border border-purple-50">
+                          <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-semibold text-gray-800 mb-2">Portfolio Risk</h3>
+                          <p className="text-gray-600 mb-6">Connect your wallet to analyze your personal exposure and get personalized risk recommendations.</p>
+                          <Link 
+                            to="/portfolio" 
+                            className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                          >
+                            View Portfolio
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        </div>
                       </div>
                       
                       <div className="mt-16 text-center">
@@ -155,7 +189,7 @@ const App: React.FC = () => {
                 <Route path="/anomalies" element={<Anomalies />} />
                 <Route path="/alerts" element={<AlertsPage />} />
                 <Route path="/cross-chain" element={<CrossChainMonitoring />} />
-                {/* Remove diagnostics route */}
+                <Route path="/portfolio" element={<PortfolioPage />} />
               </Routes>
             </main>
           </div>
