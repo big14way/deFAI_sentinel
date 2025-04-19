@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { Link, useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { getAllProtocols, getAllAnomalies } from '../services/web3';
-import axios from 'axios';
+import { fetchAlerts } from '../services/api';
 import AlertFeed from '../components/alerts/AlertFeed';
 import { Alert, AlertSeverity, AlertCategory, AlertStatus } from '../types';
 import DashboardStats from '../components/dashboard/DashboardStats';
@@ -45,24 +45,6 @@ const Dashboard: React.FC = () => {
             
             console.log('Protocols loaded:', validProtocols.length);
             setProtocols(validProtocols);
-            
-            // Generate mock alerts as soon as we have protocols
-            if (validProtocols.length > 0) {
-              const mockAlerts: Alert[] = validProtocols
-                .filter(p => p.riskScore > 50)
-                .slice(0, 3)
-                .map((p, index) => ({
-                  id: `mock-${index}`,
-                  timestamp: Date.now() - 1000 * 60 * (index + 1) * 10,
-                  protocol: p,
-                  title: `High Risk Score on ${p.name}`,
-                  message: `${p.name} has a risk score of ${p.riskScore}, which indicates potential vulnerability.`,
-                  severity: p.riskScore > 70 ? AlertSeverity.HIGH : AlertSeverity.MEDIUM,
-                  category: AlertCategory.RISK_SCORE_CHANGE,
-                  status: AlertStatus.NEW
-                }));
-              setRecentAlerts(mockAlerts);
-            }
           }
         } catch (protocolError: any) {
           console.error('Error loading protocols:', protocolError);
@@ -88,6 +70,76 @@ const Dashboard: React.FC = () => {
           if (isMounted) {
             // Set an empty array for anomalies if load fails
             setRecentAnomalies([]);
+          }
+        }
+        
+        // Load alerts
+        try {
+          console.log('Fetching alerts');
+          const alertsData = await fetchAlerts();
+          
+          if (isMounted && alertsData && alertsData.length > 0) {
+            console.log('Alerts loaded:', alertsData.length);
+            
+            // Convert from indexer format to frontend format if needed
+            const formattedAlerts: Alert[] = alertsData.map(alert => ({
+              id: alert._id || alert.id,
+              timestamp: new Date(alert.timestamp).getTime(),
+              protocol: alert.protocol,
+              title: alert.title,
+              message: alert.message,
+              severity: alert.severity as AlertSeverity,
+              category: alert.category as AlertCategory,
+              status: alert.status as AlertStatus,
+              anomaly: alert.anomaly
+            }));
+            
+            setRecentAlerts(formattedAlerts);
+          } else if (isMounted) {
+            // If no alerts from API, generate mock alerts as backup
+            console.log('No alerts found, using mock data');
+            if (protocols.length > 0) {
+              const mockAlerts: Alert[] = protocols
+                .filter(p => p.riskScore > 50)
+                .slice(0, 3)
+                .map((p, index) => ({
+                  id: `mock-${index}`,
+                  timestamp: Date.now() - 1000 * 60 * (index + 1) * 10,
+                  protocol: p,
+                  title: `High Risk Score on ${p.name}`,
+                  message: `${p.name} has a risk score of ${p.riskScore}, which indicates potential vulnerability.`,
+                  severity: p.riskScore > 70 ? AlertSeverity.HIGH : AlertSeverity.MEDIUM,
+                  category: AlertCategory.RISK_SCORE_CHANGE,
+                  status: AlertStatus.NEW
+                }));
+              setRecentAlerts(mockAlerts);
+            } else {
+              setRecentAlerts([]);
+            }
+          }
+        } catch (alertError) {
+          console.warn('Error loading alerts:', alertError);
+          
+          if (isMounted) {
+            // Use mock data if API fails
+            if (protocols.length > 0) {
+              const mockAlerts: Alert[] = protocols
+                .filter(p => p.riskScore > 50)
+                .slice(0, 3)
+                .map((p, index) => ({
+                  id: `mock-${index}`,
+                  timestamp: Date.now() - 1000 * 60 * (index + 1) * 10,
+                  protocol: p,
+                  title: `High Risk Score on ${p.name}`,
+                  message: `${p.name} has a risk score of ${p.riskScore}, which indicates potential vulnerability.`,
+                  severity: p.riskScore > 70 ? AlertSeverity.HIGH : AlertSeverity.MEDIUM,
+                  category: AlertCategory.RISK_SCORE_CHANGE,
+                  status: AlertStatus.NEW
+                }));
+              setRecentAlerts(mockAlerts);
+            } else {
+              setRecentAlerts([]);
+            }
           }
         }
       } catch (err) {

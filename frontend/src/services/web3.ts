@@ -15,8 +15,8 @@ let provider: ethers.providers.JsonRpcProvider | null = null;
 let deFiSentinelContract: ethers.Contract | null = null;
 let isInitialized = false;
 
-// Placeholder logo for protocols without a logo
-const defaultLogoUrl = 'https://via.placeholder.com/50?text=DeFi';
+// Better default logo for protocols without a logo
+const defaultLogoUrl = 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/svg/color/generic.svg';
 
 // Function to check if wallet is connected
 const isWalletConnected = (): boolean => {
@@ -126,6 +126,7 @@ const mockProtocols = [
     lastUpdateTime: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
     anomalyCount: 2,
     tvl: 5230000000, // $5.23B
+    logoUrl: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/svg/color/aave.svg'
   },
   {
     address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
@@ -171,6 +172,7 @@ const mockProtocols = [
     lastUpdateTime: Date.now() - 1000 * 60 * 180, // 3 hours ago
     anomalyCount: 0,
     tvl: 8430000000, // $8.43B
+    logoUrl: 'https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/svg/color/wbtc.svg'
   },
   {
     address: '0x514910771af9ca656af840dff83e8264ecf986ca',

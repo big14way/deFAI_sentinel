@@ -3,9 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { getProtocolByAddress, updateRiskScore, recordAnomaly } from '../../services/web3';
-import { ProtocolCategory } from '../../types/protocol';
+import { ProtocolCategory, ProtocolReputation } from '../../types/protocol';
 import { formatRelativeTime, formatTimestamp, formatCurrency } from '../../utils/formatters';
-import { ProtocolHealthScore, CrossChainDeployments } from '../../components/protocols';
+import { ProtocolHealthScore, CrossChainDeployments, ReputationScore, UpdateReputationForm } from '../../components/protocols';
+import { getProtocolReputation, updateProtocolReputation } from '../../services/reputation';
 
 const ProtocolDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,11 @@ const ProtocolDetails: React.FC = () => {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [showAnomalyForm, setShowAnomalyForm] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // New state for reputation system
+  const [reputation, setReputation] = useState<ProtocolReputation | null>(null);
+  const [loadingReputation, setLoadingReputation] = useState(false);
+  const [showReputationForm, setShowReputationForm] = useState(false);
 
   // Load protocol data
   useEffect(() => {
@@ -79,6 +85,26 @@ const ProtocolDetails: React.FC = () => {
     
     fetchProtocolDetails();
   }, [id, isConnected]);
+
+  // Load reputation data
+  useEffect(() => {
+    if (!id || !protocol) return;
+
+    async function fetchReputationData() {
+      try {
+        setLoadingReputation(true);
+        const data = await getProtocolReputation(id);
+        setReputation(data);
+      } catch (err) {
+        console.error('Error fetching reputation data:', err);
+        // Don't set error state here to avoid blocking the UI
+      } finally {
+        setLoadingReputation(false);
+      }
+    }
+    
+    fetchReputationData();
+  }, [id, protocol]);
 
   const getRiskColor = (score: number): string => {
     if (score >= 75) return 'text-red-600';
@@ -172,6 +198,27 @@ const ProtocolDetails: React.FC = () => {
 
   const handleGoBack = () => {
     navigate(-1);
+  };
+
+  // Handle reputation update
+  const handleUpdateReputation = async (data: ProtocolReputation) => {
+    if (!id) return;
+    
+    setUpdating(true);
+    setError(null);
+    setSuccessMessage(null);
+    
+    try {
+      const updatedData = await updateProtocolReputation(id, data);
+      setReputation(updatedData);
+      setSuccessMessage('Reputation data updated successfully');
+      setShowReputationForm(false);
+    } catch (err: any) {
+      console.error('Error updating reputation data:', err);
+      setError(err.message || 'Failed to update reputation data');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   // Loading state
@@ -362,6 +409,50 @@ const ProtocolDetails: React.FC = () => {
               {protocol.description || `${protocol.name} is a decentralized protocol operating on the ${protocol.chain || 'Base'} blockchain. No additional description has been provided for this protocol.`}
             </p>
           </div>
+
+          {/* Health Score */}
+          <ProtocolHealthScore protocol={protocol} />
+
+          {/* Reputation Score */}
+          {showReputationForm ? (
+            <UpdateReputationForm
+              protocolId={id || ''}
+              currentReputation={reputation || undefined}
+              onUpdate={handleUpdateReputation}
+              onCancel={() => setShowReputationForm(false)}
+            />
+          ) : (
+            <>
+              {loadingReputation ? (
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <div className="flex justify-center items-center h-40">
+                    <LoadingSpinner size="md" />
+                  </div>
+                </div>
+              ) : (
+                <div className="relative">
+                  <ReputationScore 
+                    reputation={reputation} 
+                    protocolName={protocol.name} 
+                  />
+                  <button
+                    onClick={() => setShowReputationForm(true)}
+                    className="absolute top-6 right-6 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    title="Update reputation data"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Cross-chain Deployments */}
+          {protocol.deployments && Object.keys(protocol.deployments).length > 0 && (
+            <CrossChainDeployments protocol={protocol} />
+          )}
         </div>
 
         {/* Sidebar */}
@@ -564,13 +655,6 @@ const ProtocolDetails: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
-
-      {/* After other protocol information, before the JSX return statement ends */}
-      {protocol && (
-        <div className="mt-6">
-          <CrossChainDeployments protocol={protocol} />
         </div>
       )}
     </div>

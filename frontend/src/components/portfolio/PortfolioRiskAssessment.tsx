@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPortfolio, RiskRecommendation } from '../../types/portfolio';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { formatCurrency, getRiskColor } from '../../utils/formatters';
@@ -17,6 +17,21 @@ const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({
   const { portfolio, recommendations, isLoading, error, refreshPortfolio } = usePortfolio(userAddress);
   const [activeTab, setActiveTab] = useState<'overview' | 'exposures' | 'recommendations'>('overview');
   
+  // Track if wallet was ever connected to prevent auto-disconnect issues
+  const [wasWalletEverConnected, setWasWalletEverConnected] = useState(false);
+  
+  // Update state when wallet is connected
+  useEffect(() => {
+    if (userAddress) {
+      setWasWalletEverConnected(true);
+    }
+  }, [userAddress]);
+  
+  // Fix for issue where wallet appears to disconnect when navigating
+  // If the wallet was connected before, but now appears disconnected,
+  // prompt user to manually reconnect rather than showing the standard connect prompt
+  const shouldShowReconnectPrompt = wasWalletEverConnected && !userAddress;
+  
   // Function to render wallet connect prompt
   const renderConnectWallet = () => (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
@@ -25,15 +40,19 @@ const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
       </div>
-      <h2 className="text-xl font-semibold mb-4">Connect Your Wallet</h2>
+      <h2 className="text-xl font-semibold mb-4">
+        {shouldShowReconnectPrompt ? 'Reconnect Your Wallet' : 'Connect Your Wallet'}
+      </h2>
       <p className="text-gray-600 dark:text-gray-400 mb-6">
-        Connect your wallet to view your portfolio risk assessment and receive personalized recommendations.
+        {shouldShowReconnectPrompt 
+          ? 'Your wallet connection appears to have been lost. Please reconnect to continue viewing your portfolio.' 
+          : 'Connect your wallet to view your portfolio risk assessment and receive personalized recommendations.'}
       </p>
       <button 
         onClick={onConnectWallet}
         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
       >
-        Connect Wallet
+        {shouldShowReconnectPrompt ? 'Reconnect Wallet' : 'Connect Wallet'}
       </button>
     </div>
   );

@@ -4,6 +4,24 @@
 
 echo "Starting DeFi Sentinel Services..."
 
+# Function to kill process on port
+kill_process_on_port() {
+    local port=$1
+    local pid=$(lsof -ti:$port)
+    if [ ! -z "$pid" ]; then
+        echo "Killing process $pid using port $port"
+        kill -9 $pid 2>/dev/null
+        sleep 1
+    fi
+}
+
+# Clear all ports we'll be using
+echo "Checking for processes using required ports..."
+kill_process_on_port 5001  # ML server
+kill_process_on_port 3000  # Backend
+kill_process_on_port 3001  # Frontend
+kill_process_on_port 3002  # Indexer
+
 # Define base directory
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$BASE_DIR"
@@ -42,31 +60,12 @@ start_backend() {
 start_ml_model() {
   echo -e "${YELLOW}Starting ML model server...${NC}"
   
-  # Check if virtual environment exists
-  if [ ! -d "$BASE_DIR/ml-models/venv" ]; then
-    echo -e "${YELLOW}Creating Python virtual environment...${NC}"
-    python3 -m venv "$BASE_DIR/ml-models/venv" || {
-      echo -e "${RED}Failed to create virtual environment. Using system Python instead.${NC}"
-    }
-  fi
+  # Create Python virtual environment if it doesn't exist
+  create_venv
   
-  if [ -d "$BASE_DIR/ml-models/venv" ]; then
-    # Activate virtual environment and install dependencies
-    echo -e "${YELLOW}Installing Python dependencies...${NC}"
-    (cd "$BASE_DIR/ml-models" && \
-      . ./venv/bin/activate && \
-      pip install -q -r requirements.txt) || {
-      echo -e "${RED}Failed to install dependencies. ML server may not work correctly.${NC}"
-    }
-    
-    # Start the server with virtual environment
-    echo -e "${YELLOW}Starting ML server with virtual environment...${NC}"
-    (cd "$BASE_DIR/ml-models" && . ./venv/bin/activate && python3 server.py) &
-  else
-    # Fallback to system Python if venv creation failed
-    echo -e "${YELLOW}Starting ML server with system Python...${NC}"
-    (cd "$BASE_DIR/ml-models" && python3 server.py) &
-  fi
+  # Start the server with virtual environment
+  echo -e "${YELLOW}Starting ML server with virtual environment...${NC}"
+  (cd "$BASE_DIR/ml-models" && . ./venv/bin/activate && python3 server.py) &
   
   ML_PID=$!
   echo -e "${GREEN}ML model server started with PID: $ML_PID${NC}"
@@ -78,13 +77,109 @@ start_ml_model() {
   fi
 }
 
+# Create Python virtual environment if it doesn't exist
+create_venv() {
+  echo -e "${YELLOW}Checking Python virtual environment...${NC}"
+  if [ ! -d "$BASE_DIR/ml-models/venv" ]; then
+    echo -e "${YELLOW}Creating Python virtual environment...${NC}"
+    (cd "$BASE_DIR/ml-models" && python3 -m venv venv) || {
+      echo -e "${RED}Failed to create Python virtual environment. Please make sure venv is installed.${NC}"
+      echo -e "${YELLOW}Attempting to install venv...${NC}"
+      python3 -m pip install --user virtualenv
+      (cd "$BASE_DIR/ml-models" && python3 -m venv venv) || {
+        echo -e "${RED}Failed to create virtual environment after installing venv. Exiting.${NC}"
+        exit 1
+      }
+    }
+  fi
+  
+  # Activate virtual environment and install dependencies
+  echo -e "${YELLOW}Installing Python dependencies...${NC}"
+  (cd "$BASE_DIR/ml-models" && \
+    . ./venv/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -q setuptools wheel && \
+    pip install -q -r requirements.txt) || {
+    echo -e "${RED}Failed to install dependencies. ML server may not work correctly.${NC}"
+  }
+}
+
 # Start indexer service
 start_indexer() {
   echo -e "${YELLOW}Starting indexer service...${NC}"
-  cd "$BASE_DIR/indexer" && npm start &
+  
+  # Check if package.json exists in indexer directory, create if not
+  if [ ! -f "$BASE_DIR/indexer/package.json" ]; then
+    echo -e "${YELLOW}Creating package.json for indexer...${NC}"
+    mkdir -p "$BASE_DIR/indexer"
+    cat > "$BASE_DIR/indexer/package.json" << EOF
+{
+  "name": "defai-sentinel-indexer",
+  "version": "1.0.0",
+  "description": "Blockchain indexer for DeFAI Sentinel",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "ethers": "^5.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
+EOF
+  fi
+  
+  # Create src directory and app.js if they don't exist
+  mkdir -p "$BASE_DIR/indexer/src"
+  if [ ! -f "$BASE_DIR/indexer/src/app.js" ]; then
+    echo -e "${YELLOW}Creating app.js for indexer...${NC}"
+    cat > "$BASE_DIR/indexer/src/app.js" << EOF
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.INDEXER_PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'defai-sentinel-indexer' });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(\`Indexer service running on port \${PORT}\`);
+});
+EOF
+  fi
+  
+  # Check for node_modules and install if needed
+  if [ ! -d "$BASE_DIR/indexer/node_modules" ]; then
+    echo -e "${YELLOW}Installing indexer dependencies...${NC}"
+    (cd "$BASE_DIR/indexer" && npm install) || {
+      echo -e "${RED}Failed to install indexer dependencies. Indexer may not work correctly.${NC}"
+    }
+  fi
+  
+  # Start the indexer service
+  echo -e "${YELLOW}Starting indexer service...${NC}"
+  (cd "$BASE_DIR/indexer" && npm start) &
   INDEXER_PID=$!
   echo -e "${GREEN}Indexer service started with PID: $INDEXER_PID${NC}"
-  cd "$BASE_DIR"
+  
+  # Add to the list of services
+  SERVICES+=("Indexer:$INDEXER_PID")
 }
 
 # Start frontend

@@ -9,6 +9,8 @@ import { getChainById, getChainName, getChainColor } from '../utils/chains';
 import { Protocol } from '../types/protocol';
 import { formatCurrency } from '../utils/formatters';
 import { LoadingSpinner } from './LoadingSpinner';
+import { useAccount } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 interface CrossChainMonitoringProps {
   selectedProtocolAddress?: string;
@@ -18,6 +20,8 @@ const CrossChainMonitoring: React.FC<CrossChainMonitoringProps> = ({
   selectedProtocolAddress 
 }) => {
   const navigate = useNavigate();
+  const { address } = useAccount();
+  const { openConnectModal } = useConnectModal();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chains, setChains] = useState<number[]>([]);
@@ -26,6 +30,23 @@ const CrossChainMonitoring: React.FC<CrossChainMonitoringProps> = ({
   const [assetFlows, setAssetFlows] = useState<any>(null);
   const [selectedSourceChain, setSelectedSourceChain] = useState<number | null>(null);
   const [selectedTargetChain, setSelectedTargetChain] = useState<number | null>(null);
+  
+  // Track if wallet was ever connected to prevent auto-disconnect issues
+  const [wasWalletEverConnected, setWasWalletEverConnected] = useState(false);
+  
+  // Update state when wallet is connected
+  useEffect(() => {
+    if (address) {
+      setWasWalletEverConnected(true);
+    }
+  }, [address]);
+  
+  // Check if wallet needs reconnection
+  const handleConnectWallet = () => {
+    if (openConnectModal) {
+      openConnectModal();
+    }
+  };
 
   // Load chains
   useEffect(() => {
@@ -88,11 +109,55 @@ const CrossChainMonitoring: React.FC<CrossChainMonitoringProps> = ({
       try {
         setLoading(true);
         const flows = await getAssetFlowsBetweenChains(selectedSourceChain, selectedTargetChain);
-        setAssetFlows(flows);
+        
+        // Ensure data exists even if the API returns null
+        if (!flows) {
+          // Create default data
+          setAssetFlows({
+            sourceChainId: selectedSourceChain,
+            targetChainId: selectedTargetChain,
+            totalVolume: 0,
+            flowCount: 0,
+            avgRiskScore: 0,
+            links: [],
+            historicalData: Array.from({ length: 7 }, (_, i) => {
+              const day = new Date();
+              day.setDate(day.getDate() - i);
+              return {
+                date: day.toISOString().split('T')[0],
+                volume: 0,
+                flowCount: 0
+              };
+            }).reverse()
+          });
+        } else {
+          setAssetFlows(flows);
+        }
+        
         setLoading(false);
       } catch (err: any) {
         console.error('Error fetching asset flows:', err);
         setError(err.message || 'Failed to fetch asset flows');
+        
+        // Set default data on error
+        setAssetFlows({
+          sourceChainId: selectedSourceChain,
+          targetChainId: selectedTargetChain,
+          totalVolume: 0,
+          flowCount: 0,
+          avgRiskScore: 0,
+          links: [],
+          historicalData: Array.from({ length: 7 }, (_, i) => {
+            const day = new Date();
+            day.setDate(day.getDate() - i);
+            return {
+              date: day.toISOString().split('T')[0],
+              volume: 0,
+              flowCount: 0
+            };
+          }).reverse()
+        });
+        
         setLoading(false);
       }
     };

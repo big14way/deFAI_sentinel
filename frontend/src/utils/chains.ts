@@ -6,7 +6,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   1: {
     id: 1,
     name: 'Ethereum',
-    iconUrl: 'https://ethereum.org/static/6b935ac0e6194247347855dc3d328e83/6ed5f/eth-diamond-black.webp',
+    iconUrl: '/images/chains/ethereum.svg',
     explorerUrl: 'https://etherscan.io',
     color: '#627EEA',
     nativeCurrency: {
@@ -18,7 +18,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   10: {
     id: 10,
     name: 'Optimism',
-    iconUrl: 'https://optimism.io/images/optimism-logo.svg',
+    iconUrl: '/images/chains/optimism.svg',
     explorerUrl: 'https://optimistic.etherscan.io',
     color: '#FF0420',
     nativeCurrency: {
@@ -30,7 +30,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   56: {
     id: 56,
     name: 'BNB Chain',
-    iconUrl: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+    iconUrl: '/images/chains/bnb.svg',
     explorerUrl: 'https://bscscan.com',
     color: '#F0B90B',
     nativeCurrency: {
@@ -42,7 +42,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   137: {
     id: 137,
     name: 'Polygon',
-    iconUrl: 'https://polygon.technology/favicon.png',
+    iconUrl: '/images/chains/polygon.svg',
     explorerUrl: 'https://polygonscan.com',
     color: '#8247E5',
     nativeCurrency: {
@@ -54,7 +54,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   42161: {
     id: 42161,
     name: 'Arbitrum',
-    iconUrl: 'https://arbitrum.io/wp-content/uploads/2023/03/cropped-Arbitrum_Icon_FullColor.png',
+    iconUrl: '/images/chains/arbitrum.svg',
     explorerUrl: 'https://arbiscan.io',
     color: '#28A0F0',
     nativeCurrency: {
@@ -66,7 +66,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   43114: {
     id: 43114,
     name: 'Avalanche',
-    iconUrl: 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
+    iconUrl: '/images/chains/avalanche.svg',
     explorerUrl: 'https://snowtrace.io',
     color: '#E84142',
     nativeCurrency: {
@@ -78,7 +78,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   8453: {
     id: 8453,
     name: 'Base',
-    iconUrl: 'https://pbs.twimg.com/profile_images/1675247132178059264/t5l_GQzD_400x400.jpg',
+    iconUrl: '/images/chains/base.svg',
     explorerUrl: 'https://basescan.org',
     color: '#0052FF',
     nativeCurrency: {
@@ -92,7 +92,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   5: {
     id: 5,
     name: 'Goerli',
-    iconUrl: 'https://ethereum.org/static/6b935ac0e6194247347855dc3d328e83/6ed5f/eth-diamond-black.webp',
+    iconUrl: '/images/chains/ethereum.svg',
     explorerUrl: 'https://goerli.etherscan.io',
     color: '#627EEA',
     nativeCurrency: {
@@ -104,7 +104,7 @@ export const CHAINS: Record<number, ChainInfo> = {
   84531: {
     id: 84531,
     name: 'Base Goerli',
-    iconUrl: 'https://pbs.twimg.com/profile_images/1675247132178059264/t5l_GQzD_400x400.jpg',
+    iconUrl: '/images/chains/base.svg',
     explorerUrl: 'https://goerli.basescan.org',
     color: '#0052FF',
     nativeCurrency: {
@@ -120,6 +120,7 @@ export const getChainById = (chainId: number): ChainInfo => {
   return CHAINS[chainId] || {
     id: chainId,
     name: `Chain ${chainId}`,
+    iconUrl: '/images/chains/default.svg',
     color: '#6B7280',
     nativeCurrency: {
       name: 'Ether',
@@ -137,8 +138,8 @@ export const getChainName = (chainId: number | undefined): string => {
 
 // Get chain icon URL with fallback
 export const getChainIconUrl = (chainId: number | undefined): string => {
-  if (!chainId) return '';
-  return CHAINS[chainId]?.iconUrl || '';
+  if (!chainId) return '/images/chains/default.svg';
+  return CHAINS[chainId]?.iconUrl || '/images/chains/default.svg';
 };
 
 // Helper to format address for a specific chain explorer

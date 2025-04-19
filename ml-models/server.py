@@ -31,7 +31,7 @@ try:
     app = create_app()
     
     if __name__ == '__main__':
-        port = int(os.environ.get('PORT', 5000))
+        port = int(os.environ.get('PORT', 5001))
         debug = os.environ.get('DEBUG', 'True').lower() == 'true'
         
         logger.info(f"Starting ML server on port {port}")
@@ -206,6 +206,6 @@ except ImportError as e:
         })
 
     if __name__ == '__main__':
-        port = int(os.environ.get('PORT', 5000))
+        port = int(os.environ.get('PORT', 5001))
         logger.info(f"Starting ML server on port {port}")
         app.run(host='0.0.0.0', port=port, debug=True) 

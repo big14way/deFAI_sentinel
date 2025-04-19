@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { configureChains, createConfig, WagmiConfig } from 'wagmi';
+import { configureChains, createConfig, WagmiConfig, useAccount } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 import { publicProvider } from 'wagmi/providers/public';
-import { RainbowKitProvider, connectorsForWallets } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, connectorsForWallets, useConnectModal } from '@rainbow-me/rainbowkit';
 import { metaMaskWallet, injectedWallet, walletConnectWallet } from '@rainbow-me/rainbowkit/wallets';
 import '@rainbow-me/rainbowkit/styles.css';
 import { baseSepolia } from './config/chains';
@@ -17,17 +17,29 @@ import AddProtocol from './pages/AddProtocol';
 import ProtocolDetails from './pages/Protocols/Details';
 import CrossChainMonitoring from './components/CrossChainMonitoring';
 import PortfolioRiskAssessment from './components/portfolio/PortfolioRiskAssessment';
+import InstitutionalDashboard from './pages/Dashboard/InstitutionalDashboard';
+import LiquidityMonitoring from './pages/Dashboard/LiquidityMonitoring';
+import SecurityAuditReports from './pages/Dashboard/SecurityAuditReports';
 
 // Create a Portfolio page component that uses the PortfolioRiskAssessment component
 const PortfolioPage: React.FC = () => {
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  
   const handleConnectWallet = () => {
-    // Use RainbowKit's open method or similar approach
-    console.log("Connect wallet button clicked");
+    if (openConnectModal) {
+      openConnectModal();
+    } else {
+      console.log("Connect wallet modal not available");
+    }
   };
   
   return (
     <div className="container mx-auto px-4">
-      <PortfolioRiskAssessment onConnectWallet={handleConnectWallet} />
+      <PortfolioRiskAssessment 
+        userAddress={address} 
+        onConnectWallet={handleConnectWallet} 
+      />
     </div>
   );
 };
@@ -190,6 +202,11 @@ const App: React.FC = () => {
                 <Route path="/alerts" element={<AlertsPage />} />
                 <Route path="/cross-chain" element={<CrossChainMonitoring />} />
                 <Route path="/portfolio" element={<PortfolioPage />} />
+                
+                {/* New routes for institutional features */}
+                <Route path="/dashboard/institutional" element={<InstitutionalDashboard />} />
+                <Route path="/dashboard/liquidity" element={<LiquidityMonitoring />} />
+                <Route path="/dashboard/security-audits" element={<SecurityAuditReports />} />
               </Routes>
             </main>
           </div>

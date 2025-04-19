@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <path fill="#627EEA" d="M50 0c27.614 0 50 22.386 50 50s-22.386 50-50 50S0 77.614 0 50 22.386 0 50 0z"/>
+  <path fill="#fff" fill-opacity=".6" d="M49.981 21v21.35L71.5 52.25z"/>
+  <path fill="#fff" d="M49.982 21L28.5 52.25l21.482-9.9z"/>
+  <path fill="#fff" fill-opacity=".6" d="M49.981 68.563V79L71.5 55.2z"/>
+  <path fill="#fff" d="M49.981 79V68.562L28.5 55.2z"/>
+  <path fill="#fff" fill-opacity=".2" d="M49.981 65.041l21.519-12.79-21.519-9.913z"/>
+  <path fill="#fff" fill-opacity=".6" d="M28.5 52.25l21.482 12.79V42.339z"/>
+</svg> 

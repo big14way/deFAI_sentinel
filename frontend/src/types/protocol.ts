@@ -56,6 +56,13 @@ export interface Protocol {
   deployments?: { [chainId: number]: string }; // Map of chainId to contract address
   bridgeAddresses?: string[]; // List of associated bridge contract addresses
   crossChainRiskScore?: number; // Risk score calculated considering cross-chain factors
+  
+  // New reputation system fields
+  trustScore?: number;
+  reputationDetails?: ProtocolReputation;
+  
+  // Added for compatibility with existing components
+  description?: string;
 }
 
 // Added for cross-chain support
@@ -140,4 +147,36 @@ export enum RiskFactorStatus {
   RESOLVED = 'resolved',
   MONITORING = 'monitoring',
   IGNORED = 'ignored'
+}
+
+export interface ProtocolReputation {
+  // Base scores (0-100)
+  transparencyScore: number;
+  auditHistory: ProtocolAudit[];
+  incidentResponseScore: number;
+  developerScore: number;
+  communityScore: number;
+  communityFeedback: CommunityFeedback[];
+  // Meta data
+  lastUpdated: number; // timestamp
+  verificationStatus: 'verified' | 'partial' | 'unverified';
+}
+
+export interface ProtocolAudit {
+  id: string;
+  auditor: string;
+  date: number; // timestamp
+  reportUrl?: string;
+  severity?: 'critical' | 'high' | 'medium' | 'low' | 'none';
+  score?: number; // 0-100
+  verified: boolean;
+}
+
+export interface CommunityFeedback {
+  id: string;
+  source: 'twitter' | 'discord' | 'forum' | 'github' | 'other';
+  sentiment: 'positive' | 'neutral' | 'negative';
+  category: 'development' | 'communication' | 'transparency' | 'incident' | 'general';
+  timestamp: number;
+  weight: number; // 0-1 based on source reputation
 } 

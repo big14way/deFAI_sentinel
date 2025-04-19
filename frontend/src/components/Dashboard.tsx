@@ -3,6 +3,8 @@ import { getAllProtocols } from '../services/web3';
 import RiskScoreCard from './RiskScoreCard';
 import { Protocol } from '../types';
 import { ProtocolHealthScore } from './protocols';
+import AssetFlows from './dashboard/AssetFlows';
+import DashboardStats from './dashboard/DashboardStats';
 
 const Dashboard: React.FC = () => {
   const [protocols, setProtocols] = useState<Protocol[]>([]);
@@ -66,13 +68,21 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {validProtocols.slice(0, 4).map((protocol) => (
-                <div key={protocol.address} onClick={() => setSelectedProtocol(protocol)} className="cursor-pointer">
-                  <RiskScoreCard protocol={protocol} />
-                </div>
-              ))}
-            </div>
+            <>
+              <DashboardStats protocols={validProtocols} />
+              
+              <div className="my-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {validProtocols.slice(0, 4).map((protocol) => (
+                  <div key={protocol.address} onClick={() => setSelectedProtocol(protocol)} className="cursor-pointer">
+                    <RiskScoreCard protocol={protocol} />
+                  </div>
+                ))}
+              </div>
+              
+              <div className="my-8">
+                <AssetFlows />
+              </div>
+            </>
           )}
         </>
       )}
