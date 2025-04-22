@@ -1,31 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { getAllProtocols } from '../services/web3';
 import { Link } from 'react-router-dom';
 
 const Protocols: React.FC = () => {
-  const { isConnected } = useAccount();
   const [loading, setLoading] = useState(true);
   const [protocols, setProtocols] = useState<any[]>([]);
   const [filteredProtocols, setFilteredProtocols] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{key: string, direction: 'asc' | 'desc'}>({
     key: 'riskScore',
     direction: 'desc'
   });
 
-  // Load protocols when wallet is connected
+  // Load protocols on mount
   useEffect(() => {
     async function loadProtocols() {
-      if (!isConnected) return;
-      
       try {
         setLoading(true);
         setError(null);
-        setConnectionError(null);
         
         const data = await getAllProtocols();
         
@@ -38,20 +32,14 @@ const Protocols: React.FC = () => {
         setFilteredProtocols(validProtocols);
       } catch (err: any) {
         console.error('Error loading protocols:', err);
-        
-        // Check for wallet connection errors
-        if (err.message && err.message.includes('WebSocket connection failed')) {
-          setConnectionError('Wallet connection issue detected. Please reconnect your wallet.');
-        } else {
-          setError('Failed to load protocols. Please try again later.');
-        }
+        setError('Failed to load protocols. Please try again later.');
       } finally {
         setLoading(false);
       }
     }
 
     loadProtocols();
-  }, [isConnected]);
+  }, []);
 
   // Filter and sort protocols when search term or sort config changes
   useEffect(() => {
@@ -98,49 +86,6 @@ const Protocols: React.FC = () => {
     if (score < 70) return { label: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
     return { label: 'High Risk', color: 'bg-red-100 text-red-800' };
   };
-
-  // Handle wallet connection issues
-  const handleReconnect = () => {
-    window.location.reload();
-  };
-
-  if (!isConnected) {
-    return (
-      <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
-        <p className="text-gray-600 mb-4 max-w-md mx-auto">
-          Please connect your wallet to view protocol data.
-        </p>
-      </div>
-    );
-  }
-
-  if (connectionError) {
-    return (
-      <div className="text-center p-8 bg-white rounded-xl shadow-lg">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold mb-4">Wallet Connection Issue</h2>
-        <p className="text-gray-600 mb-6 max-w-md mx-auto">
-          {connectionError}
-        </p>
-        <button
-          onClick={handleReconnect}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Reconnect
-        </button>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -198,100 +143,142 @@ const Protocols: React.FC = () => {
           <select 
             className="px-3 py-2 border border-gray-300 rounded-md"
             onChange={(e) => {
-              if (e.target.value === 'all') {
+              const value = e.target.value;
+              if (value === 'all') {
                 setFilteredProtocols(protocols);
-              } else {
-                const isActive = e.target.value === 'active';
-                setFilteredProtocols(protocols.filter(p => p.isActive === isActive));
+              } else if (value === 'high') {
+                setFilteredProtocols(protocols.filter(p => p.riskScore >= 70));
+              } else if (value === 'medium') {
+                setFilteredProtocols(protocols.filter(p => p.riskScore >= 30 && p.riskScore < 70));
+              } else if (value === 'low') {
+                setFilteredProtocols(protocols.filter(p => p.riskScore < 30));
               }
             }}
           >
             <option value="all">All Protocols</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
+            <option value="high">High Risk</option>
+            <option value="medium">Medium Risk</option>
+            <option value="low">Low Risk</option>
           </select>
         </div>
       </div>
 
-      {/* Protocol List */}
       {filteredProtocols.length === 0 ? (
-        <div className="p-8 text-center bg-white rounded-lg shadow">
-          <p className="text-gray-600">No protocols found matching your criteria.</p>
+        <div className="bg-white shadow rounded-lg p-8 text-center">
+          <p className="text-gray-500">No protocols found.</p>
+          <Link 
+            to="/protocols/add" 
+            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Add New Protocol
+          </Link>
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden rounded-md">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('name')}
-                >
-                  Protocol Name {getSortIndicator('name')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Address
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('riskScore')}
-                >
-                  Risk Score {getSortIndicator('riskScore')}
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('isActive')}
-                >
-                  Status {getSortIndicator('isActive')}
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort('anomalyCount')}
-                >
-                  Anomalies {getSortIndicator('anomalyCount')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProtocols.map((protocol) => {
-                const riskInfo = getRiskLabel(protocol.riskScore);
-                return (
-                  <tr key={protocol.address} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-blue-600">{protocol.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 truncate max-w-[150px]">{protocol.address}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${riskInfo.color}`}>
-                        {protocol.riskScore}% - {riskInfo.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${protocol.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {protocol.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {protocol.anomalyCount}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Link
-                        to={`/protocols/${protocol.address}`}
-                        className="text-blue-600 hover:text-blue-900 text-sm font-medium"
-                      >
-                        View Details
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('name')}
+                  >
+                    Protocol {getSortIndicator('name')}
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('riskScore')}
+                  >
+                    Risk Score {getSortIndicator('riskScore')}
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('tvl')}
+                  >
+                    TVL {getSortIndicator('tvl')}
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredProtocols.map((protocol) => {
+                  const risk = getRiskLabel(protocol.riskScore);
+                  return (
+                    <tr key={protocol.address} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {protocol.logoUrl ? (
+                            <img 
+                              src={protocol.logoUrl} 
+                              alt={protocol.name} 
+                              className="h-10 w-10 rounded-full mr-3 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "/generic-protocol-icon.png";
+                              }}
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-blue-100 mr-3 flex items-center justify-center">
+                              <span className="text-blue-800 font-semibold">
+                                {protocol.name.substring(0, 2).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium text-gray-900">{protocol.name}</div>
+                            <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                              {protocol.address}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${risk.color}`}>
+                            {risk.label}
+                          </div>
+                          <span className="ml-2 text-gray-900 font-medium">{protocol.riskScore}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${(protocol.tvl / 1000000).toFixed(2)}M
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          protocol.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {protocol.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <Link 
+                          to={`/protocols/${protocol.address}`}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -113,8 +113,11 @@ export const TVLMonitor: React.FC<TVLMonitorProps> = ({ flowData }) => {
   const anomalyCount = protocolsWithMetrics.filter(p => p.isAnomaly).length;
   const severeAnomalyCount = protocolsWithMetrics.filter(p => p.isSevereAnomaly).length;
   
+  console.log("TVLMonitor rendering with flow data:", flowData);
+  console.log("Sorted protocols:", sortedProtocols);
+  
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto space-y-6">
       {/* Alert banner if there are severe anomalies */}
       {severeAnomalyCount > 0 && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 dark:bg-red-900 dark:border-red-600">

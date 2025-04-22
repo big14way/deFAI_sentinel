@@ -55,7 +55,7 @@ const SAMPLE_SCENARIOS: Scenario[] = [
     id: 'price-oracle-manipulation',
     name: 'Price Oracle Manipulation',
     type: 'attack-vector',
-    description: 'Tests the protocol's resistance to price oracle manipulation attacks.',
+    description: 'Tests the protocol\'s resistance to price oracle manipulation attacks.',
     riskLevel: 'high',
     estimatedImpact: 45,
     complexity: 'complex',
@@ -178,7 +178,7 @@ const SimulationEnvironment: React.FC<SimulationEnvironmentProps> = ({ protocol 
     const impactPercentage = selectedScenario!.estimatedImpact;
     const impactAmount = (protocolTVL * impactPercentage) / 100;
     
-    const vulnerabilities = [];
+    const vulnerabilities: string[] = [];
     if (Math.random() > 0.5) vulnerabilities.push('Input validation weakness');
     if (Math.random() > 0.7) vulnerabilities.push('Oracle dependency risks');
     if (Math.random() > 0.8) vulnerabilities.push('Access control issues');

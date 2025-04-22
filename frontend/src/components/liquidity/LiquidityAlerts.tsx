@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Protocol } from '../../types/protocol';
 
 interface LiquidityAlert {
@@ -95,6 +95,7 @@ export const LiquidityAlerts: React.FC<LiquidityAlertsProps> = ({ protocols }) =
   };
   
   const [alerts, setAlerts] = useState<LiquidityAlert[]>(generateMockAlerts());
+  const [filteredAlerts, setFilteredAlerts] = useState<LiquidityAlert[]>([]);
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all');
   const [filterType, setFilterType] = useState<'all' | 'outflow' | 'inflow' | 'volatility'>('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
@@ -111,14 +112,23 @@ export const LiquidityAlerts: React.FC<LiquidityAlertsProps> = ({ protocols }) =
   const [pushSeverity, setPushSeverity] = useState<string>("critical");
   const [isSettingsSaved, setIsSettingsSaved] = useState<boolean>(false);
   
+  // Initialize filteredAlerts with the full list of alerts when component mounts
+  useEffect(() => {
+    setFilteredAlerts(alerts);
+  }, []);
+  
   // Filter alerts based on the current filters
-  const filteredAlerts = alerts.filter(alert => {
-    const matchesSeverity = filterSeverity === 'all' || alert.severity === filterSeverity;
-    const matchesType = filterType === 'all' || alert.type === filterType;
-    const matchesReadStatus = !showUnreadOnly || !alert.isRead;
+  useEffect(() => {
+    const filtered = alerts.filter(alert => {
+      const matchesSeverity = filterSeverity === 'all' || alert.severity === filterSeverity;
+      const matchesType = filterType === 'all' || alert.type === filterType;
+      const matchesReadStatus = !showUnreadOnly || !alert.isRead;
+      
+      return matchesSeverity && matchesType && matchesReadStatus;
+    });
     
-    return matchesSeverity && matchesType && matchesReadStatus;
-  });
+    setFilteredAlerts(filtered);
+  }, [alerts, filterSeverity, filterType, showUnreadOnly]);
   
   // Mark an alert as read
   const handleMarkAsRead = (alertId: string) => {
@@ -289,7 +299,7 @@ export const LiquidityAlerts: React.FC<LiquidityAlertsProps> = ({ protocols }) =
             {showUnreadOnly ? ' • unread only' : ''}
           </div>
           
-          {alerts.some(alert => !alert.isRead) && (
+          {filteredAlerts.some(alert => !alert.isRead) && (
             <button
               onClick={handleMarkAllAsRead}
               className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"

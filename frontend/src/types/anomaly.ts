@@ -11,17 +11,23 @@ export interface ContractAnomaly {
 
 export interface Anomaly {
   id: string;
+  protocolId: string;
+  protocol?: Protocol;
   timestamp: number;
-  protocol: Protocol;
-  type: AnomalyType;
-  severity: AnomalySeverity;
+  type: 'price' | 'tvl' | 'liquidation' | 'governance' | 'utilization' | 'other';
+  severity: 'low' | 'medium' | 'high';
   description: string;
-  score: number;
-  features: AnomalyFeature[];
+  status: 'active' | 'resolved' | 'monitoring' | 'false_positive';
+  metrics?: Record<string, any>;
   relatedTransactions?: string[];
-  detectionMethod: DetectionMethod;
-  falsePositive: boolean;
-  metadata?: Record<string, any>;
+  resolutionDetails?: ResolutionDetails;
+}
+
+export interface ResolutionDetails {
+  timestamp: number;
+  resolvedBy?: string;
+  resolution: string;
+  notes?: string;
 }
 
 export enum AnomalyType {

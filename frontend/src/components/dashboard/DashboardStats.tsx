@@ -10,6 +10,7 @@ interface DashboardStatsProps {
   highRiskProtocols: number;
   totalTVL: number;
   recentAnomalies: number;
+  avgRiskScore?: number;
 }
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({
@@ -18,9 +19,10 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
   highRiskProtocols,
   totalTVL,
   recentAnomalies,
+  avgRiskScore,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
       <StatCard 
         title="Total Protocols" 
         value={totalProtocols}
@@ -74,6 +76,18 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({
           </svg>
         }
         color="amber"
+      />
+      <StatCard 
+        title="Avg Risk Score" 
+        value={avgRiskScore !== undefined ? avgRiskScore.toFixed(1) : 'N/A'}
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        }
+        color="orange"
+        change={avgRiskScore !== undefined ? (avgRiskScore < 30 ? -1 : avgRiskScore > 70 ? 1 : 0) : 0}
+        isPositive={avgRiskScore !== undefined ? avgRiskScore < 50 : true}
       />
     </div>
   );

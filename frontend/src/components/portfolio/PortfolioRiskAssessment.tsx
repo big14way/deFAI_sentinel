@@ -2,19 +2,111 @@ import React, { useState, useEffect } from 'react';
 import { UserPortfolio, RiskRecommendation } from '../../types/portfolio';
 import { usePortfolio } from '../../hooks/usePortfolio';
 import { formatCurrency, getRiskColor } from '../../utils/formatters';
+// Fix import to match correct function name or remove if not needed
+// import { getUserExposure, calculateUserRiskScore } from '../../services/web3';
 import StatCard from '../dashboard/StatCard';
-import LoadingSpinner from '../LoadingSpinner';
+import { LoadingSpinner } from '../LoadingSpinner';
+
+// Mock portfolio data for development
+const MOCK_PORTFOLIO: UserPortfolio = {
+  address: '0x1234567890abcdef1234567890abcdef12345678',
+  totalValue: 15420.75,
+  riskScore: 63,
+  lastUpdated: Math.floor(Date.now() / 1000),
+  exposures: [
+    {
+      protocolAddress: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+      protocolName: 'Aave',
+      amount: 5400.25,
+      percentage: 35.02,
+      riskScore: 25,
+      lastUpdated: Math.floor(Date.now() / 1000),
+      assets: []
+    },
+    {
+      protocolAddress: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+      protocolName: 'Uniswap',
+      amount: 3800.50,
+      percentage: 24.65,
+      riskScore: 40,
+      lastUpdated: Math.floor(Date.now() / 1000),
+      assets: []
+    },
+    {
+      protocolAddress: '0xc00e94cb662c3520282e6f5717214004a7f26888',
+      protocolName: 'Compound',
+      amount: 3200.00,
+      percentage: 20.75,
+      riskScore: 35,
+      lastUpdated: Math.floor(Date.now() / 1000),
+      assets: []
+    },
+    {
+      protocolAddress: '0x514910771af9ca656af840dff83e8264ecf986ca',
+      protocolName: 'Chainlink',
+      amount: 3020.00,
+      percentage: 19.58,
+      riskScore: 72,
+      lastUpdated: Math.floor(Date.now() / 1000),
+      assets: []
+    }
+  ]
+};
+
+// Mock recommendations
+const MOCK_RECOMMENDATIONS: RiskRecommendation[] = [
+  {
+    id: 'rec-1',
+    type: 'exit',
+    description: 'Exit Chainlink due to high risk score (72/100)',
+    severity: 'high',
+    protocolAddress: '0x514910771af9ca656af840dff83e8264ecf986ca',
+    actionSteps: [
+      'Withdraw your assets (3020.00 USD) from Chainlink',
+      'Move to a lower risk protocol or stablecoin position'
+    ],
+    potentialRiskReduction: 11.2
+  },
+  {
+    id: 'rec-2',
+    type: 'diversify',
+    description: 'Reduce concentration in Aave (35.02% of portfolio)',
+    severity: 'medium',
+    protocolAddress: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+    actionSteps: [
+      'Reduce position in Aave by at least 20%',
+      'Spread assets across 3-5 different protocols with low correlation'
+    ],
+    potentialRiskReduction: 5
+  },
+  {
+    id: 'rec-3',
+    type: 'rebalance',
+    description: 'Rebalance portfolio to reduce overall risk exposure',
+    severity: 'medium',
+    actionSteps: [
+      'Reduce exposure to high-risk protocols',
+      'Increase allocation to protocols with risk scores below 40',
+      'Consider adding stablecoin positions as a safety measure'
+    ],
+    potentialRiskReduction: 15
+  }
+];
 
 interface PortfolioRiskAssessmentProps {
   userAddress?: string;
-  onConnectWallet: () => void;
+  onConnectWallet?: () => void;
 }
 
 const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({ 
   userAddress,
   onConnectWallet 
 }) => {
-  const { portfolio, recommendations, isLoading, error, refreshPortfolio } = usePortfolio(userAddress);
+  // Use state variables to manage portfolio data instead of the hook
+  const [loading, setLoading] = useState(false);
+  const [portfolio, setPortfolio] = useState<UserPortfolio | null>(MOCK_PORTFOLIO);
+  const [recommendations, setRecommendations] = useState<RiskRecommendation[]>(MOCK_RECOMMENDATIONS);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'exposures' | 'recommendations'>('overview');
   
   // Track if wallet was ever connected to prevent auto-disconnect issues
@@ -27,59 +119,45 @@ const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({
     }
   }, [userAddress]);
   
-  // Fix for issue where wallet appears to disconnect when navigating
-  // If the wallet was connected before, but now appears disconnected,
-  // prompt user to manually reconnect rather than showing the standard connect prompt
-  const shouldShowReconnectPrompt = wasWalletEverConnected && !userAddress;
+  // Handle wallet connection
+  const handleConnectWallet = () => {
+    if (onConnectWallet) {
+      onConnectWallet();
+    }
+  };
   
-  // Function to render wallet connect prompt
-  const renderConnectWallet = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-      <div className="mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <LoadingSpinner />
+        <p className="mt-4 text-gray-600">Loading portfolio data...</p>
       </div>
-      <h2 className="text-xl font-semibold mb-4">
-        {shouldShowReconnectPrompt ? 'Reconnect Your Wallet' : 'Connect Your Wallet'}
-      </h2>
-      <p className="text-gray-600 dark:text-gray-400 mb-6">
-        {shouldShowReconnectPrompt 
-          ? 'Your wallet connection appears to have been lost. Please reconnect to continue viewing your portfolio.' 
-          : 'Connect your wallet to view your portfolio risk assessment and receive personalized recommendations.'}
-      </p>
-      <button 
-        onClick={onConnectWallet}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-      >
-        {shouldShowReconnectPrompt ? 'Reconnect Wallet' : 'Connect Wallet'}
-      </button>
-    </div>
-  );
+    );
+  }
   
-  // Function to render loading state
-  const renderLoading = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 flex justify-center items-center">
-      <LoadingSpinner />
-      <span className="ml-3 text-gray-600 dark:text-gray-400">Loading portfolio data...</span>
-    </div>
-  );
+  // Error state
+  if (error) {
+    return renderError();
+  }
   
   // Function to render error state
-  const renderError = () => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-      <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-red-600 dark:text-red-400">
-        <h3 className="font-medium mb-2">Error Loading Portfolio</h3>
-        <p>{error || 'An unexpected error occurred.'}</p>
-        <button 
-          onClick={() => refreshPortfolio()}
-          className="mt-3 px-3 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-700 text-sm"
-        >
-          Retry
-        </button>
+  function renderError() {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-red-600 dark:text-red-400">
+          <h3 className="font-medium mb-2">Error Loading Portfolio</h3>
+          <p>{error || 'An unexpected error occurred.'}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-3 px-3 py-1 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-700 text-sm"
+          >
+            Retry
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
   
   // Function to render portfolio overview
   const renderOverview = () => {
@@ -208,18 +286,20 @@ const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({
     );
   };
   
-  // Function to render risk recommendations
+  // Function to render recommendations
   const renderRecommendations = () => {
-    if (!recommendations.length) {
+    if (!recommendations || recommendations.length === 0) {
       return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-lg font-medium mb-2">No Recommendations</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Your portfolio looks good! There are no risk-reduction recommendations at this time.
-          </p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="text-center py-8">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">No Recommendations</h3>
+            <p className="mt-1 text-gray-500 dark:text-gray-400">
+              Your portfolio is in good shape! We don't have any specific recommendations at this time.
+            </p>
+          </div>
         </div>
       );
     }
@@ -257,18 +337,30 @@ const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({
             <div className="px-6 py-4">
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recommended Actions:</h4>
-                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 text-sm">
-                  {rec.actionSteps.map((step, idx) => (
-                    <li key={idx}>{step}</li>
+                <ul className="list-disc pl-5 space-y-1">
+                  {rec.actionSteps.map((step, index) => (
+                    <li key={index} className="text-sm text-gray-600 dark:text-gray-400">{step}</li>
                   ))}
                 </ul>
               </div>
               
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <span>Potential risk reduction: {rec.potentialRiskReduction.toFixed(1)} points</span>
+              <div className="flex items-center">
+                <div className="flex-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Potential Risk Reduction:
+                  </span>
+                  <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-green-500 dark:bg-green-600 h-2 rounded-full" 
+                      style={{ width: `${Math.min(rec.potentialRiskReduction * 2, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <span className="text-lg font-medium text-gray-900 dark:text-white">
+                    {rec.potentialRiskReduction.toFixed(1)}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -277,21 +369,8 @@ const PortfolioRiskAssessment: React.FC<PortfolioRiskAssessmentProps> = ({
     );
   };
   
-  // Main render function
-  if (!userAddress) {
-    return renderConnectWallet();
-  }
-  
-  if (isLoading) {
-    return renderLoading();
-  }
-  
-  if (error) {
-    return renderError();
-  }
-  
   return (
-    <div>
+    <div className="max-w-5xl mx-auto p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-4">Portfolio Risk Assessment</h2>
         <p className="text-gray-600 dark:text-gray-400">

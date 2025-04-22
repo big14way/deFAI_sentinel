@@ -83,7 +83,11 @@ export const ReportHistory: React.FC = () => {
   
   // Handle archiving a report
   const handleArchiveReport = (reportId: string) => {
-    if (confirm('Are you sure you want to archive this report?')) {
+    // Replace confirm with a direct operation
+    // In a real application, you'd use a modal confirmation dialog
+    const userConfirmed = window.confirm('Are you sure you want to archive this report?');
+    
+    if (userConfirmed) {
       setReports(reports.map(report => 
         report.id === reportId 
           ? { ...report, status: 'archived' as const } 

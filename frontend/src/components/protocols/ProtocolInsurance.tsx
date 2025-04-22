@@ -1,5 +1,5 @@
 import React from 'react';
-import InsurancePanel from '../insurance/InsurancePanel';
+import { InsurancePanel } from '../insurance/InsurancePanel';
 import { Protocol } from '../../types';
 import { useUserExposure } from '../../hooks/useUserExposure';
 

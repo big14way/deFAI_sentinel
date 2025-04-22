@@ -111,15 +111,27 @@ export const usePortfolio = (userAddress?: string): UsePortfolioResult => {
             };
           } else {
             // Calculate total value
-            const totalValue = userExposures.reduce((sum, exp) => sum + exp.amount, 0);
+            const totalValue = userExposures.reduce((sum: number, exp: { amount: number }) => sum + exp.amount, 0);
             
             // Calculate portfolio risk score
             const riskScore = await calculateUserRiskScore(userAddress);
             
             // Fetch additional protocol data for each exposure
             const exposuresWithDetails = await Promise.all(
-              userExposures.map(async (exposure) => {
+              userExposures.map(async (exposure: any) => {
                 const protocol = await getProtocolByAddress(exposure.protocolAddress);
+                
+                // If protocol is null, create a fallback object with default values
+                if (!protocol) {
+                  return {
+                    ...exposure,
+                    protocolName: `Unknown Protocol (${exposure.protocolAddress.slice(0, 8)}...)`,
+                    percentage: totalValue > 0 ? (exposure.amount / totalValue) * 100 : 0,
+                    riskScore: 50, // Default medium risk
+                    assets: exposure.assets || []
+                  };
+                }
+                
                 return {
                   ...exposure,
                   protocolName: protocol.name,

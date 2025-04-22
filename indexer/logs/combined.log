@@ -6,3 +6,75 @@
 {"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-19 12:28:49"}
 {"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-19 13:27:28"}
 {"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-19 13:27:58"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-19 21:29:10"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-19 21:29:40"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-19 23:22:29"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-19 23:22:59"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 01:34:04"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 01:34:34"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 01:38:01"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 01:38:31"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 02:20:43"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 02:21:13"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 02:36:18"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 02:36:48"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 04:19:19"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 04:19:49"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 04:22:16"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 04:22:46"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 04:27:41"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 04:28:11"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 04:38:56"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-20 04:39:25"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 04:39:26"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 20:13:45"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 20:14:15"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 21:29:10"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 21:29:40"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 22:54:52"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 22:55:22"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 23:09:19"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-20 23:09:32"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 23:09:49"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-20 23:39:12"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-20 23:39:33"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-20 23:39:42"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 01:12:25"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-21 01:12:37"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 01:12:55"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 10:00:06"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-21 10:00:30"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 10:00:36"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 11:56:29"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-21 11:56:45"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 11:56:59"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 12:52:46"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 12:53:16"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 13:01:59"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 13:02:29"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 13:46:17"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 13:46:48"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 15:16:12"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-21 15:16:35"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 15:16:42"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 15:19:38"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 15:20:08"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 15:26:53"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 15:27:23"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 20:57:37"}
+{"level":"error","message":"Error fetching alerts: Operation `alerts.find()` buffering timed out after 10000ms","service":"indexer-service","timestamp":"2025-04-21 20:58:06"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 20:58:07"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 21:13:50"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 21:14:20"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 21:18:09"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 21:18:39"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-21 21:27:25"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-21 21:27:55"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-22 01:02:00"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-22 01:02:31"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-22 02:37:50"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-22 02:38:20"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-22 02:46:59"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-22 02:47:29"}
+{"level":"info","message":"Indexer service running on port 3002","service":"indexer-service","timestamp":"2025-04-22 03:30:01"}
+{"level":"error","message":"Error connecting to MongoDB: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017","service":"indexer-service","timestamp":"2025-04-22 03:30:31"}

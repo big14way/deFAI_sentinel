@@ -32,6 +32,9 @@ export const useProtocols = (useWeb3 = true) => {
           lastUpdated: p.lastUpdateTime,
           anomalyCount: p.anomalyCount,
           lastAnomaly: p.lastAnomalyTime || undefined,
+          isActive: p.isActive,
+          lastUpdateTime: p.lastUpdateTime,
+          deployments: {} // Required field for Protocol type
         }));
       } else {
         // Fetch from API
@@ -111,6 +114,11 @@ export const useProtocols = (useWeb3 = true) => {
 
   const toggleProtocolStatus = useCallback(async (protocolId: string) => {
     try {
+      const protocol = protocols.find(p => p.id === protocolId);
+      if (!protocol) {
+        throw new Error('Protocol not found');
+      }
+      
       if (useWeb3) {
         await web3Service.toggleProtocolStatus(protocolId);
         // Update local state
@@ -132,7 +140,7 @@ export const useProtocols = (useWeb3 = true) => {
       setError(err as Error);
       return false;
     }
-  }, [useWeb3]);
+  }, [useWeb3, protocols]);
 
   return {
     protocols,

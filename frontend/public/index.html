@@ -4,19 +4,147 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#6366f1" />
+    <meta name="theme-color" content="#000000" />
     <meta
       name="description"
-      content="DeFi Sentinel - Advanced security monitoring and risk analysis for DeFi protocols"
+      content="DeFi Sentinel - Security monitoring and risk analysis platform for DeFi protocols"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>DeFi Sentinel</title>
+    
+    <!-- Fallback style in case React fails to load -->
+    <style>
+      .fallback-content {
+        display: none;
+        padding: 20px;
+        max-width: 800px;
+        margin: 40px auto;
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      
+      /* Show fallback after 5 seconds if React hasn't rendered */
+      body:not(:has(#root > *)) .fallback-content {
+        display: block;
+      }
+      
+      .fallback-heading {
+        color: #333;
+        margin-bottom: 16px;
+      }
+      
+      .fallback-button {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 16px;
+      }
+      
+      .fallback-button:hover {
+        background-color: #3367d6;
+      }
+    </style>
+    
+    <!-- Security-related meta tags -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    
+    <!-- Wallet connection pre-fixes -->
+    <script>
+      // Clean up any stale wallet connection data on page load
+      (function() {
+        // Clear legacy WalletConnect storage items
+        try {
+          localStorage.removeItem('walletconnect');
+          localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE');
+          localStorage.removeItem('wagmi.connected');
+          localStorage.removeItem('wagmi.store');
+          localStorage.removeItem('walletconnect_v2');
+          
+          // Find and clear any other wallet-related items
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (
+              key.toLowerCase().includes('wallet') || 
+              key.toLowerCase().includes('wc@') ||
+              key.toLowerCase().includes('wagmi')
+            )) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (e) {
+          console.warn('Error cleaning up wallet storage:', e);
+        }
+        
+        // Define failsafe for wallet connections
+        window.walletConnectionFailsafe = function() {
+          try {
+            if (window.ethereum) {
+              console.log('Direct wallet connection attempted');
+              return window.ethereum.request({ method: 'eth_requestAccounts' });
+            }
+          } catch (e) {
+            console.error('Failsafe connection error:', e);
+          }
+          return Promise.reject('No wallet available');
+        };
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <!-- React root element -->
     <div id="root"></div>
+    
+    <!-- Fallback content that will show if React doesn't render anything -->
+    <div class="fallback-content">
+      <h2 class="fallback-heading">DeFi Sentinel</h2>
+      <p>The application is currently having trouble loading.</p>
+      <p>This might be due to:</p>
+      <ul>
+        <li>Network connectivity issues</li>
+        <li>Browser compatibility problems</li>
+        <li>Temporary server issues</li>
+      </ul>
+      <button class="fallback-button" onclick="window.location.reload()">Refresh Page</button>
+    </div>
+    
+    <!-- Force display of fallback after 5 seconds if React hasn't loaded -->
+    <script>
+      setTimeout(function() {
+        // Check if React has rendered anything
+        if (document.getElementById('root').children.length === 0) {
+          console.log('React failed to render after timeout');
+          var fallback = document.querySelector('.fallback-content');
+          if (fallback) {
+            fallback.style.display = 'block';
+          }
+        }
+      }, 5000);
+    </script>
     <!--
       DeFi Sentinel - DeFi security monitoring and analysis system
       Built with React, TypeScript, TailwindCSS, and RainbowKit

@@ -1,3 +1,5 @@
+import { RiskAssessment } from './index';
+
 export enum ProtocolStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
@@ -51,9 +53,14 @@ export interface Protocol {
   category?: string;
   lastUpdated?: number; // Alias for lastUpdateTime
   lastAnomaly?: number; // Alias for lastAnomalyTime
+  network?: string; // Network the protocol is deployed on
+  url?: string; // URL to the protocol's website
+  
+  // Risk assessment components
+  riskComponents?: RiskAssessment;
   
   // Cross-chain specific fields
-  deployments?: { [chainId: number]: string }; // Map of chainId to contract address
+  deployments: { [chainId: number]: string }; // Map of chainId to contract address (making non-optional)
   bridgeAddresses?: string[]; // List of associated bridge contract addresses
   crossChainRiskScore?: number; // Risk score calculated considering cross-chain factors
   
@@ -63,6 +70,20 @@ export interface Protocol {
   
   // Added for compatibility with existing components
   description?: string;
+  
+  // Added for pricing data
+  totalTokens?: number;
+  priceData?: {
+    currentPrice: number;
+    priceChange24h: number;
+    volatility: number;
+  };
+  
+  // Added for metrics data
+  metrics?: ProtocolMetrics;
+  volatility?: number; // Protocol price volatility
+  createdAt?: number; // Protocol creation timestamp
+  audited?: boolean; // Whether protocol has been audited
 }
 
 // Added for cross-chain support
@@ -160,6 +181,8 @@ export interface ProtocolReputation {
   // Meta data
   lastUpdated: number; // timestamp
   verificationStatus: 'verified' | 'partial' | 'unverified';
+  // Computed overall trust score
+  trustScore?: number;
 }
 
 export interface ProtocolAudit {

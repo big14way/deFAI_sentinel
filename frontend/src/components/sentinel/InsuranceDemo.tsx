@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import InsurancePanel from './InsurancePanel';
+import { InsurancePanel } from './InsurancePanel';
 import { Protocol } from '../../types';
 
 interface InsurancePlan {
@@ -25,7 +25,8 @@ export const InsuranceDemo: React.FC = () => {
     anomalyCount: 2,
     lastAnomalyTime: Math.floor(Date.now() / 1000) - 86400, // 1 day ago
     tvl: 10000000, // $10M TVL
-    description: 'A sample DeFi protocol for demonstration purposes'
+    description: 'A sample DeFi protocol for demonstration purposes',
+    deployments: {}
   };
 
   const handlePurchase = (plan: InsurancePlan) => {
@@ -42,7 +43,7 @@ export const InsuranceDemo: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{sampleProtocol.name}</h2>
         <div className="text-sm text-gray-500">
           <p>Risk Score: <span className="font-medium">{sampleProtocol.riskScore}/100</span></p>
-          <p>TVL: <span className="font-medium">${(sampleProtocol.tvl / 1000000).toFixed(2)}M</span></p>
+          <p>TVL: <span className="font-medium">${(sampleProtocol.tvl ? (sampleProtocol.tvl / 1000000).toFixed(2) : 0)}M</span></p>
         </div>
         
         {isPurchased && activePlan && (

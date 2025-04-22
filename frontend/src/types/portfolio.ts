@@ -15,6 +15,7 @@ export interface ProtocolExposure {
   percentage: number; // Percentage of portfolio
   riskScore: number; // Risk score of this protocol (0-100)
   assets: UserAsset[];
+  lastUpdated?: number; // Add this field which is being used in the code
 }
 
 export interface UserAsset {

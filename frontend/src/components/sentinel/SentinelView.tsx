@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProtocolByAddress } from '../../services/web3';
 import { formatTimestamp, formatAddress, getRiskColor } from '../../utils/formatters';
-import LoadingSpinner from '../LoadingSpinner';
-import InsurancePanel from './InsurancePanel';
+import { LoadingSpinner } from '../LoadingSpinner';
+import { InsurancePanel } from './InsurancePanel';
 import { useUserExposure } from '../../hooks/useUserExposure';
 import { Protocol } from '../../types';
 
@@ -206,10 +206,9 @@ const SentinelView: React.FC = () => {
             </div>
           ) : (
             <InsurancePanel
-              protocolName={protocol.name}
-              riskScore={protocol.riskScore}
-              userExposure={exposure}
+              protocol={protocol}
               onPurchase={handlePurchaseInsurance}
+              isPurchased={insurancePurchased}
             />
           )}
         </div>

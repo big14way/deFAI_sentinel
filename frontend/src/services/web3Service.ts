@@ -9,16 +9,33 @@ let provider: ethers.providers.JsonRpcProvider;
 let deFiSentinelContract: ethers.Contract;
 
 const initializeProvider = () => {
-  provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+  try {
+    provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+  } catch (error) {
+    console.error('Failed to initialize provider:', error);
+    // Create a fallback minimal provider that will be replaced later
+    provider = new ethers.providers.JsonRpcProvider('https://rpc.ankr.com/eth');
+  }
 };
 
 const initializeContracts = () => {
   if (!provider) initializeProvider();
-  deFiSentinelContract = new ethers.Contract(
-    DEFI_SENTINEL_ADDRESS || '',
-    DeFiSentinelABI.abi,
-    provider
-  );
+  
+  if (!DEFI_SENTINEL_ADDRESS) {
+    console.warn('DEFI_SENTINEL_ADDRESS is not defined. Contract functionality will be limited.');
+    // Create a dummy contract that will throw helpful errors
+    deFiSentinelContract = new ethers.Contract(
+      '0x0000000000000000000000000000000000000000',
+      DeFiSentinelABI.abi,
+      provider
+    );
+  } else {
+    deFiSentinelContract = new ethers.Contract(
+      DEFI_SENTINEL_ADDRESS,
+      DeFiSentinelABI.abi,
+      provider
+    );
+  }
 };
 
 // Initialize on first import
@@ -27,22 +44,41 @@ initializeContracts();
 
 // Get signer from wallet
 export const getSigner = async () => {
-  if (window.ethereum) {
+  if (!window.ethereum) {
+    throw new Error('No Ethereum provider found. Please install a wallet extension like MetaMask.');
+  }
+  
+  try {
     // Force cast to any to bypass type checking
     const ethersProvider = new ethers.providers.Web3Provider(window.ethereum as any);
+    
+    // Request account access
+    await ethersProvider.send('eth_requestAccounts', []);
+    
     return ethersProvider.getSigner();
+  } catch (error) {
+    console.error('Error getting signer:', error);
+    throw new Error('Failed to connect to wallet. Please check your wallet connection and try again.');
   }
-  throw new Error('No ethereum object found. Please install a wallet.');
 };
 
 // Connect contract with signer for write operations
 export const getSignedContract = async () => {
-  const signer = await getSigner();
-  return new ethers.Contract(
-    DEFI_SENTINEL_ADDRESS || '',
-    DeFiSentinelABI.abi,
-    signer
-  );
+  if (!DEFI_SENTINEL_ADDRESS) {
+    throw new Error('DeFi Sentinel contract address is not defined. Please check your environment configuration.');
+  }
+  
+  try {
+    const signer = await getSigner();
+    return new ethers.Contract(
+      DEFI_SENTINEL_ADDRESS,
+      DeFiSentinelABI.abi,
+      signer
+    );
+  } catch (error) {
+    console.error('Error getting signed contract:', error);
+    throw error;
+  }
 };
 
 // Read functions
@@ -56,7 +92,25 @@ export const getProtocolCount = async (): Promise<number> => {
   }
 };
 
-export const getProtocolByAddress = async (address: string) => {
+export interface Web3Protocol {
+  address: string;
+  name: string;
+  riskScore: number;
+  isActive: boolean;
+  lastUpdateTime: number;
+  anomalyCount: number;
+  lastAnomalyTime: number | null;
+}
+
+export interface Web3Anomaly {
+  id: string;
+  protocolAddress: string;
+  timestamp: number;
+  description: string;
+  severity: number;
+}
+
+export const getProtocolByAddress = async (address: string): Promise<Web3Protocol> => {
   try {
     const protocol = await deFiSentinelContract.getProtocolByAddress(address);
     return {
@@ -74,10 +128,10 @@ export const getProtocolByAddress = async (address: string) => {
   }
 };
 
-export const getAllProtocols = async () => {
+export const getAllProtocols = async (): Promise<Web3Protocol[]> => {
   try {
     const count = await getProtocolCount();
-    const protocols = [];
+    const protocols: Web3Protocol[] = [];
     
     for (let i = 0; i < count; i++) {
       const address = await deFiSentinelContract.protocols(i);
@@ -102,7 +156,7 @@ export const getAnomalyCount = async (): Promise<number> => {
   }
 };
 
-export const getAnomalyByIndex = async (index: number) => {
+export const getAnomalyByIndex = async (index: number): Promise<Web3Anomaly> => {
   try {
     const anomaly = await deFiSentinelContract.anomalies(index);
     return {
@@ -118,10 +172,10 @@ export const getAnomalyByIndex = async (index: number) => {
   }
 };
 
-export const getAllAnomalies = async () => {
+export const getAllAnomalies = async (): Promise<Web3Anomaly[]> => {
   try {
     const count = await getAnomalyCount();
-    const anomalies = [];
+    const anomalies: Web3Anomaly[] = [];
     
     for (let i = 0; i < count; i++) {
       const anomaly = await getAnomalyByIndex(i);

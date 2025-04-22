@@ -5,6 +5,11 @@ interface AuditReportGeneratorProps {
   protocols: Protocol[];
 }
 
+interface ReportSection {
+  title: string;
+  findings: any;
+}
+
 export const AuditReportGenerator: React.FC<AuditReportGeneratorProps> = ({ protocols }) => {
   const [selectedProtocol, setSelectedProtocol] = useState<string>('');
   const [reportType, setReportType] = useState<'comprehensive' | 'smart-contract' | 'risk-assessment' | 'compliance'>('comprehensive');
@@ -96,6 +101,10 @@ export const AuditReportGenerator: React.FC<AuditReportGeneratorProps> = ({ prot
         address: protocol.address,
         riskScore: protocol.riskScore,
         tvl: protocol.tvl || 0,
+        isActive: protocol.isActive,
+        lastUpdateTime: protocol.lastUpdateTime,
+        anomalyCount: protocol.anomalyCount || 0,
+        deployments: protocol.deployments || {}
       },
       reportType: reportType,
       timestamp: new Date().toISOString(),
@@ -113,7 +122,7 @@ export const AuditReportGenerator: React.FC<AuditReportGeneratorProps> = ({ prot
           'Consider formal verification for core functions'
         ]
       },
-      sections: []
+      sections: [] as ReportSection[]
     };
     
     // Add sections based on included options

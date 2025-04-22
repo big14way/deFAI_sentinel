@@ -43,12 +43,15 @@ const ProtocolDetails: React.FC = () => {
         
         let data;
         try {
+          if (!id) {
+            throw new Error('Protocol ID is undefined');
+          }
           data = await getProtocolByAddress(id);
         } catch (fetchError: any) {
           console.error('Error fetching protocol details:', fetchError);
           
           // Check if the error is specifically for the protocol with ID 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
-          if (id.toLowerCase() === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
+          if (id && id.toLowerCase() === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
             // Create a mock Wrapped Ether protocol for demo purposes
             data = {
               address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -93,6 +96,9 @@ const ProtocolDetails: React.FC = () => {
     async function fetchReputationData() {
       try {
         setLoadingReputation(true);
+        if (!id) {
+          throw new Error('Protocol ID is undefined');
+        }
         const data = await getProtocolReputation(id);
         setReputation(data);
       } catch (err) {
@@ -450,9 +456,9 @@ const ProtocolDetails: React.FC = () => {
           )}
 
           {/* Cross-chain Deployments */}
-          {protocol.deployments && Object.keys(protocol.deployments).length > 0 && (
+          {protocol.deployments && Object.keys(protocol.deployments).length > 0 ? (
             <CrossChainDeployments protocol={protocol} />
-          )}
+          ) : null}
         </div>
 
         {/* Sidebar */}

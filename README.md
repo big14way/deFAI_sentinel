@@ -1,13 +1,27 @@
 # DeFAI Sentinel
 
-A real-time risk monitoring and alert system for DeFi protocols on Base network.
+Real-time DeFi security monitoring platform that tracks protocol risks, detects anomalies, and provides cross-chain risk assessment to protect user investments.
+
+## Project Overview
+
+DeFAI Sentinel is a comprehensive security monitoring system for DeFi protocols on the Base network. It uses smart contracts to track protocol risk metrics and a modern React frontend to visualize risk data, anomalies, and cross-chain exposures.
+
+### Key Features
+
+- Real-time protocol risk monitoring and scoring
+- Anomaly detection and alerting system
+- Cross-chain protocol tracking
+- User exposure assessment
+- Interactive dashboards for risk visualization
 
 ## Project Structure
 
-The project is divided into two main parts:
+The project is divided into several main components:
 
-1. **Smart Contracts**: The on-chain component that tracks protocols, risk scores, and anomalies.
-2. **Frontend**: React-based dashboard for visualizing protocol risk data.
+1. **Smart Contracts**: On-chain components deployed on Base Sepolia that track protocols, risk scores, and anomalies
+2. **Frontend**: React-based dashboard using Tailwind CSS for responsive UI
+3. **Backend**: Node.js services for API integrations and data processing
+4. **ML Models**: Risk assessment models for enhanced protocol monitoring
 
 ## Smart Contracts
 
@@ -35,66 +49,27 @@ PRIVATE_KEY=your_private_key
 BASESCAN_API_KEY=your_basescan_api_key
 ```
 
-### Compile
+### Compile and Deploy
 
 ```bash
 npm run compile
-```
-
-### Deploy
-
-```bash
 npm run deploy -- --network base
 ```
 
 ### Verify Contract
 
-For Base Sepolia testnet:
-
 ```bash
 npx hardhat verify --network base 0xB4685D9441e2DD20C74eb4E079D741D4f8520ba6
 ```
 
-### Interact with Deployed Contract
-
-The contract is deployed at `0xB4685D9441e2DD20C74eb4E079D741D4f8520ba6` on Base network.
-
-```bash
-npm run verify-interact
-```
-
-### Check Contract Status
-
-Verify that the contract is deployed and operational:
-
-```bash
-npm run check
-```
-
-### CLI Interface
-
-For more interactive use, you can use the CLI interface:
-
-```bash
-npm run cli
-```
-
-This interactive CLI allows you to:
-- List all registered protocols
-- Get details for a specific protocol
-- Register new protocols
-- Update risk scores
-- Record and resolve anomalies
-- Calculate user risk scores
-
 ## Frontend
 
-The frontend provides a dashboard to visualize:
+The frontend provides a comprehensive dashboard to visualize protocol risks, alerts, and user exposures.
 
-- Protocol risk scores
-- Risk analysis
-- Anomaly alerts
-- User exposure tracking
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm (v8 or higher)
 
 ### Setup
 
@@ -103,33 +78,135 @@ cd frontend
 npm install
 ```
 
+### Environment Configuration
+
+Create a `.env.local` file in the frontend directory with the following variables:
+
+```
+# API Configuration
+REACT_APP_API_URL=http://localhost:3001
+REACT_APP_WS_URL=ws://localhost:3001
+
+# Blockchain Configuration
+REACT_APP_CHAIN_ID=84532
+REACT_APP_CHAIN_NAME=Base Sepolia
+REACT_APP_RPC_URL=https://sepolia.base.org
+
+# Contract Addresses
+REACT_APP_DEFI_SENTINEL_ADDRESS=0xB4685D9441e2DD20C74eb4E079D741D4f8520ba6
+
+# Feature Flags
+REACT_APP_ENABLE_TESTNETS=true
+REACT_APP_ENABLE_NOTIFICATIONS=true
+REACT_APP_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
+
+# UI Configuration
+REACT_APP_RISK_THRESHOLD=0.7
+REACT_APP_REFRESH_INTERVAL=30000
+```
+
 ### Run Development Server
 
 ```bash
-npm run dev
+cd frontend
+npm run start
 ```
+
+The app will be available at http://localhost:3000
 
 ### Build for Production
 
 ```bash
+cd frontend
 npm run build
 ```
 
-## How It Works
+## Running the Full Stack Locally
 
-1. **Protocol Registration**: DeFi protocols are registered with initial risk scores
-2. **Risk Monitoring**: The contract tracks risk scores that update based on various factors
-3. **Anomaly Detection**: Unusual activities or patterns trigger anomaly events
-4. **User Exposure**: Users can track their exposure to different protocols
-5. **Dashboard Visualization**: The frontend displays all this data in an intuitive interface
+For the complete experience, you can run all components together:
 
-## Contract Integration
+```bash
+# From project root
+./start-services.sh
+```
 
-To integrate with the DeFiSentinel contract in your own frontend:
+This script starts:
+- Frontend development server
+- Backend API server
+- ML model services (if configured)
 
-1. Import the ABI from `frontend/src/abi/DeFiSentinel.json`
-2. Use the utility functions in `frontend/src/utils/contractInteraction.ts`
-3. Use the React hooks in `frontend/src/hooks/useContract.ts` for easy state management
+## GitHub Setup and Deployment
+
+### Push to GitHub
+
+1. Initialize Git repository (if not already done):
+   ```bash
+   git init
+   ```
+
+2. Add all files to Git:
+   ```bash
+   git add .
+   ```
+
+3. Create first commit:
+   ```bash
+   git commit -m "Initial commit of DeFAI Sentinel"
+   ```
+
+4. Add GitHub remote (replace with your repository URL):
+   ```bash
+   git remote add origin https://github.com/yourusername/deFAI_sentinel.git
+   ```
+
+5. Push to GitHub:
+   ```bash
+   git push -u origin main
+   ```
+
+### Deploy to Vercel
+
+1. Install Vercel CLI:
+   ```bash
+   npm install -g vercel
+   ```
+
+2. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+3. Run Vercel deployment:
+   ```bash
+   vercel
+   ```
+
+4. Follow the prompts to link your GitHub repository and configure the project.
+
+5. For subsequent deployments, use:
+   ```bash
+   vercel --prod
+   ```
+
+## Connecting to Base Sepolia
+
+The application is configured to connect to Base Sepolia testnet. To interact with the smart contracts:
+
+1. Add Base Sepolia to your wallet (MetaMask, Coinbase Wallet, etc.)
+   - Network Name: Base Sepolia
+   - RPC URL: https://sepolia.base.org
+   - Chain ID: 84532
+   - Currency Symbol: ETH
+   - Block Explorer: https://sepolia.basescan.org
+
+2. Obtain Base Sepolia testnet ETH from:
+   - https://www.coinbase.com/faucets/base-sepolia-faucet
+
+3. Connect your wallet in the DeFAI Sentinel app
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

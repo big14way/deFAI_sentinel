@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchNetworkStats } from '../../services/api';
+// Use standard imports with type assertion
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface NetworkStat {
@@ -72,10 +73,10 @@ const ChainMetric: React.FC<ChainMetricProps> = ({ icon, name, volume24h, active
           <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
             <XAxis dataKey="day" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} tickFormatter={(value) => formatVolume(value).replace('$', '')} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(value: number) => formatVolume(value).replace('$', '')} />
             <Tooltip 
               formatter={(value: any) => formatVolume(value)}
-              labelFormatter={(label) => `${label}`}
+              labelFormatter={(label: string) => `${label}`}
             />
             <Line 
               type="monotone" 

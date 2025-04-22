@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { registerProtocol } from '../services/web3';
+import { registerProtocol, updateRiskScore } from '../services/web3';
 import { ProtocolCategory } from '../types/protocol';
 import { ethers } from 'ethers';
 
@@ -72,11 +72,21 @@ const AddProtocol: React.FC = () => {
     
     try {
       // Call the contract to register the protocol
+      // Note: The registerProtocol function only accepts address and name parameters
       await registerProtocol(
         formData.address,
-        formData.name,
-        formData.initialRiskScore
+        formData.name
       );
+      
+      // After registering, update the risk score if needed
+      if (formData.initialRiskScore !== 50) {
+        try {
+          await updateRiskScore(formData.address, formData.initialRiskScore);
+        } catch (riskErr: any) {
+          console.warn('Protocol registered but failed to set initial risk score:', riskErr);
+          // Continue with success even if risk score update fails
+        }
+      }
       
       setSuccess(true);
       

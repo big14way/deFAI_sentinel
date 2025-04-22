@@ -28,29 +28,30 @@ export const InsurancePanel: React.FC<InsurancePanelProps> = ({
   const getInsurancePlans = (protocol: Protocol): InsurancePlan[] => {
     const basePremiumRate = 0.005; // 0.5% base rate
     const riskMultiplier = protocol.riskScore / 50; // Higher risk = higher premium
+    const tvl = protocol.tvl || 1000000; // Default to $1M if TVL is not available
     
     return [
       {
         id: 'basic',
         name: 'Basic Protection',
-        coverage: protocol.tvl * 0.1, // 10% of TVL
-        premium: protocol.tvl * 0.1 * basePremiumRate * riskMultiplier,
+        coverage: tvl * 0.1, // 10% of TVL
+        premium: tvl * 0.1 * basePremiumRate * riskMultiplier,
         duration: 30,
         description: 'Basic coverage for minimal protection against protocol failures.'
       },
       {
         id: 'standard',
         name: 'Standard Protection',
-        coverage: protocol.tvl * 0.25, // 25% of TVL
-        premium: protocol.tvl * 0.25 * basePremiumRate * riskMultiplier * 0.95, // Small discount for larger coverage
+        coverage: tvl * 0.25, // 25% of TVL
+        premium: tvl * 0.25 * basePremiumRate * riskMultiplier * 0.95, // Small discount for larger coverage
         duration: 30,
         description: 'Standard coverage offering balanced protection for most users.'
       },
       {
         id: 'premium',
         name: 'Premium Protection',
-        coverage: protocol.tvl * 0.5, // 50% of TVL
-        premium: protocol.tvl * 0.5 * basePremiumRate * riskMultiplier * 0.9, // Larger discount for premium
+        coverage: tvl * 0.5, // 50% of TVL
+        premium: tvl * 0.5 * basePremiumRate * riskMultiplier * 0.9, // Larger discount for premium
         duration: 30,
         description: 'Comprehensive coverage for users with significant exposure.'
       }
@@ -143,6 +144,4 @@ export const InsurancePanel: React.FC<InsurancePanelProps> = ({
       </p>
     </div>
   );
-};
-
-export default InsurancePanel; 
+}; 

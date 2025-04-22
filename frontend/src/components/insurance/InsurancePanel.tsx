@@ -13,7 +13,7 @@ interface InsurancePlanOption {
 
 interface InsurancePanelProps {
   protocol: Protocol;
-  userExposure: number;
+  userExposure: number | null;
   onPurchase?: (planId: string, coverage: number) => void;
 }
 
@@ -27,7 +27,7 @@ export const InsurancePanel: React.FC<InsurancePanelProps> = ({
   // Calculate insurance plans based on risk score and user exposure
   const getInsurancePlans = (): InsurancePlanOption[] => {
     const basePremiumRate = protocol.riskScore / 100;
-    const exposure = userExposure > 0 ? userExposure : 1000; // Default to $1000 if no exposure
+    const exposure = userExposure && userExposure > 0 ? userExposure : 1000; // Default to $1000 if no exposure
     
     return [
       {
@@ -81,7 +81,7 @@ export const InsurancePanel: React.FC<InsurancePanelProps> = ({
       </div>
       
       <div className="mt-4 space-y-4">
-        {userExposure > 0 ? (
+        {userExposure && userExposure > 0 ? (
           <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md">
             <p className="text-sm text-blue-800 dark:text-blue-300">
               Your Current Exposure: {formatCurrency(userExposure)}

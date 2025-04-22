@@ -35,6 +35,13 @@ const Dashboard: React.FC = () => {
 
   // Filter valid protocols
   const validProtocols = protocols.filter(p => p && p.address);
+  
+  // Calculate stats for DashboardStats
+  const totalProtocols = validProtocols.length;
+  const activeProtocols = validProtocols.filter(p => p.isActive).length;
+  const highRiskProtocols = validProtocols.filter(p => p.riskScore > 70).length;
+  const totalTVL = validProtocols.reduce((sum, p) => sum + (p.tvl || 0), 0);
+  const recentAnomalies = validProtocols.reduce((sum, p) => sum + (p.anomalyCount || 0), 0);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -69,7 +76,13 @@ const Dashboard: React.FC = () => {
             </div>
           ) : (
             <>
-              <DashboardStats protocols={validProtocols} />
+              <DashboardStats 
+                totalProtocols={totalProtocols}
+                activeProtocols={activeProtocols}
+                highRiskProtocols={highRiskProtocols}
+                totalTVL={totalTVL}
+                recentAnomalies={recentAnomalies}
+              />
               
               <div className="my-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {validProtocols.slice(0, 4).map((protocol) => (

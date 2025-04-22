@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Anomaly, AnomalyType, AnomalySeverity, DetectionMethod } from '../types/anomaly';
 import * as apiService from '../services/api';
 import * as web3Service from '../services/web3Service';
+import { Web3Anomaly } from '../services/web3Service';
 import websocketService from '../services/websocket';
 
 interface UseAnomaliesProps {
@@ -41,9 +42,10 @@ export const useAnomalies = ({
           : filteredAnomalies;
           
         // Convert to Anomaly type
-        fetchedAnomalies = limitedAnomalies.map(a => ({
+        fetchedAnomalies = limitedAnomalies.map((a: Web3Anomaly) => ({
           id: a.id,
           timestamp: a.timestamp,
+          protocolId: a.protocolAddress,
           protocol: {
             id: a.protocolAddress,
             name: '', // We don't have the name from the anomaly data
@@ -52,16 +54,22 @@ export const useAnomalies = ({
             category: 'DeFi',
             riskScore: 0, // We don't have the risk score from the anomaly data
             status: 'active',
-            lastUpdated: a.timestamp
+            lastUpdated: a.timestamp,
+            isActive: true,
+            lastUpdateTime: a.timestamp,
+            anomalyCount: 0,
+            deployments: {} // Required field for Protocol type
           },
-          type: AnomalyType.UNUSUAL_TRANSACTION,
-          severity: a.severity === 3 ? AnomalySeverity.HIGH : 
-                   a.severity === 2 ? AnomalySeverity.MEDIUM : AnomalySeverity.LOW,
+          type: a.severity >= 3 ? 'price' : 
+                a.severity === 2 ? 'tvl' : 'other',
+          severity: a.severity === 3 ? 'high' : 
+                   a.severity === 2 ? 'medium' : 'low',
           description: a.description,
-          score: a.severity * 33, // Map severity to a score (0-100)
-          features: [],
-          detectionMethod: DetectionMethod.ML_MODEL,
-          falsePositive: false
+          status: 'active',
+          metrics: {
+            score: a.severity * 33 // Map severity to a score (0-100)
+          },
+          relatedTransactions: []
         }));
       } else {
         // Fetch from API
@@ -108,7 +116,7 @@ export const useAnomalies = ({
   // Handle new anomalies from websocket
   const handleNewAnomaly = useCallback((anomaly: Anomaly) => {
     // If there's a protocolId filter, only add if it matches
-    if (protocolId && anomaly.protocol.id !== protocolId) {
+    if (protocolId && anomaly.protocol && anomaly.protocol.id !== protocolId) {
       return;
     }
     

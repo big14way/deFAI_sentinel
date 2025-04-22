@@ -33,6 +33,7 @@ export enum AlertCategory {
   GOVERNANCE = 'governance',
   SECURITY = 'security',
   OPERATIONAL = 'operational',
+  RISK_SCORE_CHANGE = 'risk_score_change',
   CUSTOM = 'custom'
 }
 

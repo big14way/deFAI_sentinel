@@ -66,7 +66,8 @@ const CrossChainDeployments: React.FC<CrossChainDeploymentsProps> = ({ protocol 
   }
 
   const renderDeployments = () => {
-    const chainIds = Object.keys(crossChainData.deployments).map(Number);
+    const deployments = crossChainData.deployments || {};
+    const chainIds = Object.keys(deployments).map(Number);
     const currentChainId = crossChainData.chainId || 8453; // Default to Base if not set
     
     return (
@@ -129,8 +130,13 @@ const CrossChainDeployments: React.FC<CrossChainDeploymentsProps> = ({ protocol 
               <div className="text-sm mt-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Address</span>
-                  <a href={getExplorerUrl(chainId, crossChainData.deployments[chainId])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-[200px]">
-                    {crossChainData.deployments[chainId].substring(0, 6)}...{crossChainData.deployments[chainId].substring(crossChainData.deployments[chainId].length - 4)}
+                  <a 
+                    href={getExplorerUrl(chainId, deployments[chainId] || '')} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 hover:underline truncate max-w-[200px]"
+                  >
+                    {deployments[chainId]?.substring(0, 6)}...{deployments[chainId]?.substring((deployments[chainId]?.length || 0) - 4)}
                   </a>
                 </div>
                 

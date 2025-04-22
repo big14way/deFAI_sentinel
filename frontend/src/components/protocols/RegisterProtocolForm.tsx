@@ -82,8 +82,8 @@ const RegisterProtocolForm: React.FC<RegisterProtocolFormProps> = ({
     setSuccess(null);
 
     try {
-      const txHash = await registerProtocol(address, name, initialRiskScore);
-      setSuccess(`Protocol registered successfully! Transaction: ${txHash.slice(0, 10)}...`);
+      const success = await registerProtocol(address, name, initialRiskScore);
+      setSuccess(`Protocol registered successfully!`);
       
       // Reset form
       setAddress('');
@@ -192,7 +192,28 @@ const RegisterProtocolForm: React.FC<RegisterProtocolFormProps> = ({
           
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {error}
+              <div className="flex justify-between items-start">
+                <div className="break-words whitespace-pre-wrap overflow-auto max-h-32">
+                  {error}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(error);
+                    // Optional: Add a visual indicator that the text was copied
+                    const btn = document.activeElement as HTMLButtonElement;
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => {
+                      btn.textContent = originalText;
+                    }, 2000);
+                  }}
+                  className="ml-2 p-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded flex-shrink-0"
+                  title="Copy error message"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
           )}
           
